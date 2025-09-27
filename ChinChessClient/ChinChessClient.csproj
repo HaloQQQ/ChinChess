@@ -1,0 +1,71 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Resources\Medias\begin.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\Medias\eat.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\Medias\go.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\Medias\move.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\Medias\over.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\Medias\restart.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\Medias\select.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="IceTea.Wpf.Core" Version="1.2.7" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.9" />
+    <PackageReference Include="Prism.DryIoc" Version="8.1.97" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ChinChessCore\ChinChessCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\Images\默认头像.png" />
+    <Resource Include="Resources\Pictures\棋盘（红上）.png" />
+    <Resource Include="Resources\Pictures\棋盘（黑上）.png" />
+    <Resource Include="Resources\Pictures\红仕.png" />
+    <Resource Include="Resources\Pictures\红兵.png" />
+    <Resource Include="Resources\Pictures\红帅.png" />
+    <Resource Include="Resources\Pictures\红炮.png" />
+    <Resource Include="Resources\Pictures\红相.png" />
+    <Resource Include="Resources\Pictures\红车.png" />
+    <Resource Include="Resources\Pictures\红马.png" />
+    <Resource Include="Resources\Pictures\黑卒.png" />
+    <Resource Include="Resources\Pictures\黑士.png" />
+    <Resource Include="Resources\Pictures\黑将.png" />
+    <Resource Include="Resources\Pictures\黑炮.png" />
+    <Resource Include="Resources\Pictures\黑象.png" />
+    <Resource Include="Resources\Pictures\黑车.png" />
+    <Resource Include="Resources\Pictures\黑马.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.yml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

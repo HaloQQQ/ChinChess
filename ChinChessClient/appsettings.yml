@@ -1,0 +1,8 @@
+BusinessConfig:
+  HotKeys:
+    App:
+      象棋:
+        重玩: 重玩 (Alt+R+True)
+        播放/暂停: 播放/暂停 (Space+True)
+        悔棋: 悔棋 (Control+Z+True)
+        棋盘换向: 棋盘换向 (Alt+D+True)
