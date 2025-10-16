@@ -17,6 +17,6 @@ internal interface IVisitor : IDisposable
     bool Visit(ChinChessBing chess, Position from, Position to);
 
     bool Visit(ChinChessXiang chess, Position from, Position to);
-    bool Visit(ChineseChessShi chess, Position from, Position to);
+    bool Visit(ChinChessShi chess, Position from, Position to);
     bool Visit(ChinChessShuai chess, Position from, Position to);
 }

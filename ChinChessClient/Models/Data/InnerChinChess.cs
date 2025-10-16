@@ -11,22 +11,35 @@ using System.Diagnostics;
 namespace ChinChessClient.Models;
 
 [DebuggerDisplay("IsRed={IsRed}, Type={Type}")]
-internal class InnerChinChess : DisposableBase
+internal class InnerChinChess : CloneableBase
 {
     public static InnerChinChess Empty = new();
 
     private InnerChinChess() { }
 
-    public InnerChinChess(bool isRed, ChessType type)
+    public InnerChinChess(bool isRed, ChessType type, bool isJieQi = false, bool isBack = false)
     {
         IsRed = isRed;
         Type = type;
+
+        IsBack = isBack;
+        IsJieQi = isJieQi;
     }
+
+    public bool IsBack { get; }
+    public bool IsJieQi { get; }
 
     public ChessType? Type { get; }
     public bool IsEmpty => Type == null;
 
     public bool? IsRed { get; }
+
+    private Position _originPos = new Position(-1, -1);
+    internal Position OriginPos
+    {
+        get => _originPos; 
+        set => _originPos = value;
+    }
 
     #region IChineseChess
     public bool CanPutTo(IVisitor canEatVisitor, Position from, Position to)
@@ -34,6 +47,9 @@ internal class InnerChinChess : DisposableBase
 
     public bool PreMove(IVisitor preMoveVisitor, Position from)
         => this.Accept(preMoveVisitor, from, default);
+
+    public bool CanBeProtected(IVisitor notFatalVisitor, Position killer, Position to)
+        => this.Accept(notFatalVisitor, killer, to);
 
     public bool IsDangerous(IVisitor canEatVisitor, Position current, out ChinChessModel killer)
     {
@@ -174,59 +190,56 @@ internal class InnerChinChess : DisposableBase
         }
         #endregion
 
-        if (this.Type >= ChessType.相 && this.Type <= ChessType.帥)
-        {
-            #region 相
-            foreach (var item in new[] {
+        #region 相
+        foreach (var item in new[] {
                                 new Position(toRow - 2, toColumn - 2),
                                 new Position(toRow - 2, toColumn + 2),
                                 new Position(toRow + 2, toColumn - 2),
                                 new Position(toRow + 2, toColumn + 2)
                             })
+        {
+            if (CanEnemyTo(canEatVisitor, item, current, ChessType.相))
             {
-                if (CanEnemyTo(canEatVisitor, item, current, ChessType.相))
-                {
-                    killer = canEatVisitor.GetChess(item.Row, item.Column);
+                killer = canEatVisitor.GetChess(item.Row, item.Column);
 
-                    return true;
-                }
+                return true;
             }
-            #endregion
+        }
+        #endregion
 
-            #region 仕
-            foreach (var item in new[] {
+        #region 仕
+        foreach (var item in new[] {
                                 new Position(toRow - 1, toColumn - 1),
                                 new Position(toRow - 1, toColumn + 1),
                                 new Position(toRow + 1, toColumn - 1),
                                 new Position(toRow + 1, toColumn + 1)
                             })
+        {
+            if (CanEnemyTo(canEatVisitor, item, current, ChessType.仕))
             {
-                if (IsEnemy(canEatVisitor, item, ChessType.仕))
-                {
-                    killer = canEatVisitor.GetChess(item.Row, item.Column);
+                killer = canEatVisitor.GetChess(item.Row, item.Column);
 
-                    return true;
-                }
+                return true;
             }
-            #endregion
+        }
+        #endregion
 
-            #region 帥
-            foreach (var item in new[] {
+        #region 帥
+        foreach (var item in new[] {
                                 new Position(toRow, toColumn - 1),
                                 new Position(toRow, toColumn + 1),
                                 new Position(toRow - 1, toColumn),
                                 new Position(toRow + 1, toColumn)
                             })
+        {
+            if (CanEnemyTo(canEatVisitor, item, current, ChessType.帥))
             {
-                if (IsEnemy(canEatVisitor, item, ChessType.帥))
-                {
-                    killer = canEatVisitor.GetChess(item.Row, item.Column);
+                killer = canEatVisitor.GetChess(item.Row, item.Column);
 
-                    return true;
-                }
+                return true;
             }
-            #endregion
         }
+        #endregion
 
         killer = default;
 
@@ -329,6 +342,11 @@ internal class InnerChinChess : DisposableBase
 
     public bool IsPoseValid_Rel(ChessType chessType, Position pos, bool isEnemy = true)
     {
+        if (chessType != ChessType.帥 && this.IsJieQi)
+        {
+            return pos.Row.IsInRange(0, 9) && pos.Column.IsInRange(0, 8);
+        }
+
         Predicate<Position> predicate = null;
 
         switch (chessType)
@@ -374,6 +392,11 @@ internal class InnerChinChess : DisposableBase
 
     public bool IsPosValid_Abs(ChessType chessType, Position pos, bool isEnemy = true)
     {
+        if (chessType != ChessType.帥 && this.IsJieQi)
+        {
+            return pos.Row.IsInRange(0, 9) && pos.Column.IsInRange(0, 8);
+        }
+
         Predicate<Position> predicate = null;
 
         switch (chessType)

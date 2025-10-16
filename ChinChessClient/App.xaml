@@ -5,6 +5,10 @@
     xmlns:local="clr-namespace:ChinChessClient"
     xmlns:prism="http://prismlibrary.com/">
     <Application.Resources>
-        <ResourceDictionary Source="pack://application:,,,/IceTea.Wpf.Core;component/Resources/All.xaml" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/IceTea.Wpf.Core;component/Resources/All.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Application.Resources>
 </prism:PrismApplication>

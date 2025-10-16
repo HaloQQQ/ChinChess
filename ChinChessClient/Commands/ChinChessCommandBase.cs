@@ -21,8 +21,8 @@ internal abstract class ChinChessCommandBase : DisposableBase, IChinChessCommand
         _from = from;
         _to = to;
 
-        From = new Position(from.Row, from.Column);
-        To = new Position(to.Row, to.Column);
+        From = from.Pos;
+        To = to.Pos;
     }
 
     public abstract IChinChessCommand Execute();

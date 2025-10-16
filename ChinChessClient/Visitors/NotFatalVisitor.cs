@@ -391,11 +391,124 @@ internal class NotFatalVisitor : VisitorBase
     public override bool Visit(ChinChessBing chess, Position killerPos, Position shuaiPos)
         => !this.TryMoveCore(chess, killerPos, shuaiPos);
 
-    public override bool Visit(ChinChessXiang chess, Position from, Position to)
-        => throw new NotImplementedException();
+    public override bool Visit(ChinChessXiang chess, Position killerPos, Position shuaiPos)
+    {
+        if (!this.TryMoveCore(chess, killerPos, shuaiPos))
+        {
+            return true;
+        }
 
-    public override bool Visit(ChineseChessShi chess, Position from, Position to)
-        => throw new NotImplementedException();
+        var barrierPos = chess.GetXiangBarrier(killerPos, shuaiPos);
+
+        #region 士
+        if (this.TryProtect(chess, barrierPos, shuaiPos, ChessType.仕, new[] {
+                new Position(barrierPos.Row - 1, barrierPos.Column - 1),
+                new Position(barrierPos.Row - 1, barrierPos.Column + 1),
+                new Position(barrierPos.Row + 1, barrierPos.Column - 1),
+                new Position(barrierPos.Row + 1, barrierPos.Column + 1)
+            }))
+        {
+            return true;
+        }
+        #endregion
+
+        #region 相
+        if (this.TryProtect(chess, barrierPos, shuaiPos, ChessType.相, new[] {
+                new Position(barrierPos.Row - 2, barrierPos.Column - 2),
+                new Position(barrierPos.Row - 2, barrierPos.Column + 2),
+                new Position(barrierPos.Row + 2, barrierPos.Column - 2),
+                new Position(barrierPos.Row + 2, barrierPos.Column + 2)
+            }))
+        {
+            return true;
+        }
+        #endregion
+
+        #region 兵
+        if (this.TryProtect(chess, barrierPos, shuaiPos, ChessType.兵, new[] {
+                new Position(barrierPos.Row - 1, barrierPos.Column),
+                new Position(barrierPos.Row + 1, barrierPos.Column),
+                new Position(barrierPos.Row, barrierPos.Column - 1),
+                new Position(barrierPos.Row, barrierPos.Column + 1)
+            }))
+        {
+            return true;
+        }
+        #endregion
+
+        #region 马
+        if (this.TryProtect(chess, barrierPos, shuaiPos, ChessType.馬, new[] {
+                new Position(barrierPos.Row - 2, barrierPos.Row - 1),
+                new Position(barrierPos.Row - 1, barrierPos.Row - 2),
+                new Position(barrierPos.Row - 2, barrierPos.Row + 1),
+                new Position(barrierPos.Row - 1, barrierPos.Row + 2),
+                new Position(barrierPos.Row + 2, barrierPos.Row - 1),
+                new Position(barrierPos.Row + 1, barrierPos.Row - 2),
+                new Position(barrierPos.Row + 2, barrierPos.Row + 1),
+                new Position(barrierPos.Row + 1, barrierPos.Row + 2)
+            }))
+        {
+            return true;
+        }
+        #endregion
+
+        #region 車、炮
+        if (ComeFrom(barrierPos, -1, 0) || ComeFrom(barrierPos, 1, 0)
+            || ComeFrom(barrierPos, 0, -1) || ComeFrom(barrierPos, 0, 1)
+            )
+        {
+            return true;
+        }
+
+        bool ComeFrom(Position to, int rStep, int cStep)
+        {
+            int currentRow = to.Row, currentColumn = to.Column;
+            var currentPos = new Position(currentRow += rStep, currentColumn += cStep);
+
+            while (true)
+            {
+                if (!chess.IsPosValid_Abs(ChessType.炮 | ChessType.車, currentPos))
+                {
+                    return false;
+                }
+
+                if (!this.GetChessData(currentRow, currentColumn).IsEmpty)
+                {
+                    break;
+                }
+
+                currentPos = new Position(currentRow += rStep, currentColumn += cStep);
+            }
+
+            if (chess.IsEnemy(this, currentPos, ChessType.車 | ChessType.炮))
+            {
+                using (new MockMoveCommand(
+                        this.GetChess(currentRow, currentColumn),
+                        this.GetChess(to.Row, to.Column)
+                    ).Execute()
+                )
+                {
+                    if (chess.FaceToFace(_canEatVisitor))
+                    {
+                        return false;
+                    }
+
+                    if (!this.GetChessData(shuaiPos.Row, shuaiPos.Column).IsDangerous(_canEatVisitor, shuaiPos, out _))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+        #endregion
+
+        return false;
+    }
+
+    public override bool Visit(ChinChessShi chess, Position killerPos, Position shuaiPos)
+        => !this.TryMoveCore(chess, killerPos, shuaiPos);
 
     public override bool Visit(ChinChessShuai chess, Position from, Position to)
         => throw new NotImplementedException();

@@ -199,7 +199,7 @@ internal class CanPutVisitor : VisitorBase, IVisitor
         return this.GetChessData(barrierPos.Row, barrierPos.Column).IsEmpty;
     }
 
-    public override bool Visit(ChineseChessShi chess, Position from, Position to)
+    public override bool Visit(ChinChessShi chess, Position from, Position to)
     {
         if (!this.TryMoveCore(chess, from, to))
         {
@@ -256,7 +256,7 @@ internal class CanPutVisitor : VisitorBase, IVisitor
         int toRow = to.Row, toColumn = to.Column;
         var targetData = this.GetChessData(toRow, toColumn);
 
-        bool prevent = fromData.IsEmpty 
+        bool prevent = fromData.IsEmpty
                         || (!targetData.IsEmpty && fromData.IsRed == targetData.IsRed);
 
         return !prevent;

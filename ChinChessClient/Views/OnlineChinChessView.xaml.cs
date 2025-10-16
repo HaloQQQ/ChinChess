@@ -9,15 +9,15 @@ namespace ChinChessClient.Views;
 /// <summary>
 /// ChineseChessView.xaml 的交互逻辑
 /// </summary>
-public partial class ChinChessView : UserControl
+public partial class OnlineChinChessView : UserControl
 {
-    private ChinChessViewModel _viewModel;
+    private ChinChessViewModelBase _viewModel;
 
-    public ChinChessView()
+    public OnlineChinChessView()
     {
         InitializeComponent();
 
-        _viewModel = this.DataContext as ChinChessViewModel;
+        _viewModel = this.DataContext as ChinChessViewModelBase;
     }
 
     #region 消息框

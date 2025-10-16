@@ -34,7 +34,7 @@ internal abstract class VisitorBase : DisposableBase, IVisitor
     public abstract bool Visit(ChinChessPao chess, Position from, Position to);
     public abstract bool Visit(ChinChessBing chess, Position from, Position to);
     public abstract bool Visit(ChinChessXiang chess, Position from, Position to);
-    public abstract bool Visit(ChineseChessShi chess, Position from, Position to);
+    public abstract bool Visit(ChinChessShi chess, Position from, Position to);
     public abstract bool Visit(ChinChessShuai chess, Position from, Position to);
 
 

@@ -1,9 +1,12 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:contracts="clr-namespace:ChinChessClient.Contracts">
     <Style
         x:Key="FunctionButton"
         BasedOn="{StaticResource ButtonBase_Icon_ScaleDown_Big_SkyBlue}"
         TargetType="Button">
-        <Setter Property="Margin" Value="10,0" />
+        <Setter Property="Margin" Value="5,0" />
 
         <Setter Property="FontSize" Value="40" />
 
@@ -37,6 +40,16 @@
         <Setter Property="Content" Value="&#xe63e;" />
 
         <Setter Property="ToolTip" Value="{Binding KeyGestureDic[重玩].ToolTip}" />
+    </Style>
+
+    <Style x:Key="Element_Visible" TargetType="Grid">
+        <Setter Property="Visibility" Value="Visible" />
+
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Status}" Value="{x:Static contracts:GameStatus.Ready}">
+                <Setter Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+        </Style.Triggers>
     </Style>
 
     <Style x:Key="Signal" TargetType="Ellipse">

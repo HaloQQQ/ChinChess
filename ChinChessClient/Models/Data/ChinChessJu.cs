@@ -10,6 +10,8 @@ internal class ChinChessJu : InnerChinChess
 {
     public ChinChessJu(bool isRed) : base(isRed, ChessType.車) { }
 
+    public ChinChessJu(bool isRed, bool isJieQi, bool isBack) : base(isRed, ChessType.車, isJieQi, isBack) { }
+
     public override bool Accept(IVisitor visitor, Position from, Position to)
         => visitor.Visit(this, from, to);
 

@@ -1,12 +1,13 @@
-﻿using ChinChessClient.Views;
+﻿using ChinChessClient.ViewModels;
+using ChinChessClient.Views;
 using IceTea.Pure.Contracts;
 using IceTea.Wpf.Atom.Utils;
 using IceTea.Wpf.Atom.Utils.Configs;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
 using Prism.DryIoc;
 using Prism.Ioc;
+using Prism.Mvvm;
 using Prism.Regions;
-using Prism.Services.Dialogs;
 using System.Windows;
 
 #pragma warning disable CS8603 // 可能返回 null 引用。
@@ -23,13 +24,7 @@ public partial class App : PrismApplication
             "pack://application:,,,/IceTea.Wpf.Core;component/Resources/LightTheme.xaml",
             "pack://application:,,,/IceTea.Wpf.Core;component/Resources/DarkTheme.xaml");
 
-        Container.Resolve<IDialogService>().ShowDialog("象棋");
-
-        Window shell = (Window)Container.Resolve<IDialogWindow>();
-
-        RegionManager.SetRegionManager(shell, Container.Resolve<IRegionManager>());
-
-        return default;
+        return Container.Resolve<MainWindow>();
     }
 
     protected override void RegisterTypes(IContainerRegistry containerRegistry)
@@ -37,6 +32,18 @@ public partial class App : PrismApplication
         containerRegistry.RegisterSingleton<IConfigManager, WpfYamlConfigManager>();
         containerRegistry.RegisterSingleton<IAppConfigFileHotKeyManager, AppConfigFileHotKeyManager>();
 
-        containerRegistry.RegisterDialog<ChinChessView>("象棋");
+        containerRegistry.RegisterForNavigation<OnlineChinChessView>("Online");
+        containerRegistry.RegisterForNavigation<OnlineJieQiView>("OnlineJieQi");
+
+        containerRegistry.RegisterForNavigation<OfflineChinChessView>("Offline");
+        containerRegistry.RegisterForNavigation<OfflineJieQiView>("OfflineJieQi");
+
+        containerRegistry.RegisterSingleton<MainViewModel>();
+
+        var regionManager = Container.Resolve<IRegionManager>();
+
+        regionManager.RegisterViewWithRegion<MainView>("ChinChessRegion");
+
+        ViewModelLocationProvider.Register<MainWindow, MainViewModel>();
     }
 }

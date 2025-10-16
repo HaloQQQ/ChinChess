@@ -1,23 +1,24 @@
-﻿namespace ChinChessCore.Models;
-
+﻿namespace ChinChessCore.Models
+{
 #pragma warning disable CS0660 // 类型定义运算符 == 或运算符 !=，但不重写 Object.Equals(object o)
 #pragma warning disable CS0661 // 类型定义运算符 == 或运算符 !=，但不重写 Object.GetHashCode()
-public struct Position
-{
-    public Position(int row, int column)
+    public struct Position
     {
-        Row = row;
-        Column = column;
+        public Position(int row, int column)
+        {
+            Row = row;
+            Column = column;
+        }
+
+        public int Row { get; }
+        public int Column { get; }
+
+        public static bool operator ==(Position left, Position right)
+            => left.Row == right.Row && left.Column == right.Column;
+
+        public static bool operator !=(Position left, Position right)
+            => !(left == right);
+
+        public override string ToString() => $"({this.Row},{this.Column})";
     }
-
-    public int Row { get; }
-    public int Column { get; }
-
-    public static bool operator ==(Position left, Position right)
-        => left.Row == right.Row && left.Column == right.Column;
-
-    public static bool operator !=(Position left, Position right)
-        => !(left == right);
-
-    public override string ToString() => $"({this.Row},{this.Column})";
 }

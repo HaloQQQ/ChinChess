@@ -32,6 +32,11 @@ internal class MoveCommand : ChinChessCommandBase, IChinChessCommand
     protected override void DisposeCore()
     {
         _from.Data = _to.Data;
+        bool hasReturnToOrigin = _to.Data.IsJieQi && _to.Data.OriginPos == _from.Pos;
+        if (hasReturnToOrigin)
+        {
+            _from.Data = _from.FakeChess;
+        }
 
         _to.Data = _data;
 

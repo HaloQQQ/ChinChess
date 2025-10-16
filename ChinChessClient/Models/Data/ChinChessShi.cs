@@ -3,9 +3,11 @@ using ChinChessCore.Models;
 
 namespace ChinChessClient.Models;
 
-internal class ChineseChessShi : InnerChinChess
+internal class ChinChessShi : InnerChinChess
 {
-    public ChineseChessShi(bool isRed) : base(isRed, ChessType.仕) { }
+    public ChinChessShi(bool isRed) : base(isRed, ChessType.仕) { }
+
+    public ChinChessShi(bool isRed, bool isJieQi, bool isBack) : base(isRed, ChessType.仕, isJieQi, isBack) { }
 
     public override bool Accept(IVisitor visitor, Position from, Position to)
         => visitor.Visit(this, from, to);

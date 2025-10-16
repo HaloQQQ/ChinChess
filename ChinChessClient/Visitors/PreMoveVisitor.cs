@@ -230,7 +230,7 @@ internal class PreMoveVisitor : VisitorBase
         }
     }
 
-    public override bool Visit(ChineseChessShi chess, Position from, Position _)
+    public override bool Visit(ChinChessShi chess, Position from, Position _)
     {
         if (!this.TryMoveCore(chess, from, _))
         {
@@ -244,7 +244,7 @@ internal class PreMoveVisitor : VisitorBase
 
         return leftUp || leftDown || rightUp || rightDown;
 
-        bool MarkShi(ChineseChessShi fromData, Position from, int rowStep, int columnStep)
+        bool MarkShi(ChinChessShi fromData, Position from, int rowStep, int columnStep)
         {
             int toRow = from.Row + rowStep, toColumn = from.Column + columnStep;
 
