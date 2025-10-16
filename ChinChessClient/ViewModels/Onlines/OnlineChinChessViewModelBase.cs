@@ -292,7 +292,14 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
             {
                 this.Log(this.Name, value != null ? "获得角色" : "失去角色", this.IsRedRole == true);
 
-                this.Status = this.IsRedRole.HasValue ? GameStatus.Ready : GameStatus.NotInitialized;
+                if (this.IsRedRole.HasValue)
+                {
+                    base.RePlay_CommandExecute();
+                }
+                else
+                {
+                    this.Status = GameStatus.NotInitialized;
+                }
             }
         }
     }

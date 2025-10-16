@@ -40,7 +40,6 @@ internal abstract class GameViewModelBase<T> : NotifyBase,
 
         this.Records = new ObservableCollection<Record>();
         this.Datas = new ObservableCollection<T>();
-        this.InitDatas();
 
         this.InitHotKeys(appCfgHotKeyManager);
 
@@ -57,8 +56,6 @@ internal abstract class GameViewModelBase<T> : NotifyBase,
         _timer = new DispatcherTimer();
         _timer.Interval = TimeSpan.FromSeconds(1);
         _timer.Tick += Timer_Tick;
-
-        this.Begin_Wav();
     }
 
     protected virtual void Timer_Tick(object sender, EventArgs e)

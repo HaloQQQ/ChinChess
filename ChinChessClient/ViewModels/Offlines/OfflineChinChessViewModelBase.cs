@@ -12,6 +12,10 @@ internal abstract class OfflineChinChessViewModelBase : ChinChessViewModelBase
     {
         this.Status = GameStatus.Ready;
 
+        this.InitDatas();
+
+        this.Begin_Wav();
+
         this.RevokeCommand = new DelegateCommand(
             Revoke_CommandExecute,
             () => this.Status == GameStatus.Ready && CommandStack?.Count > 0
