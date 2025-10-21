@@ -87,7 +87,7 @@
 
                         <Image Margin="5" Source="../Resources/Images/默认头像.png" />
 
-                        <Ellipse HorizontalAlignment="Left">
+                        <Ellipse x:Name="BlackUser" HorizontalAlignment="Left">
                             <Ellipse.Fill>
                                 <ImageBrush ImageSource="../Resources/Pictures/黑将.png" />
                             </Ellipse.Fill>
@@ -101,6 +101,23 @@
                                 </Style>
                             </Ellipse.Style>
                         </Ellipse>
+                        <Popup
+                            MyAttachProperty.IsAppearOnHovered="True"
+                            Placement="Bottom"
+                            PlacementTarget="{Binding ElementName=BlackUser}">
+                            <Border
+                                MinHeight="100"
+                                Background="{StaticResource PopupBackground}"
+                                CornerRadius="10">
+                                <ListBox ItemTemplate="{StaticResource ChessDataTemplate}" ItemsSource="{Binding RedDeads}">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Width="330" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                </ListBox>
+                            </Border>
+                        </Popup>
 
                         <TextBlock
                             Margin="3"
@@ -119,7 +136,10 @@
                             Style="{StaticResource TextBlock_Theme}"
                             Text="{Binding RedTimeSpan, FallbackValue=00:00:00}" />
 
-                        <Ellipse Grid.Row="1" Grid.Column="0">
+                        <Ellipse
+                            x:Name="RedUser"
+                            Grid.Row="1"
+                            Grid.Column="0">
                             <Ellipse.Fill>
                                 <ImageBrush ImageSource="../Resources/Pictures/红帅.png" />
                             </Ellipse.Fill>
@@ -133,6 +153,23 @@
                                 </Style>
                             </Ellipse.Style>
                         </Ellipse>
+                        <Popup
+                            MyAttachProperty.IsAppearOnHovered="True"
+                            Placement="Bottom"
+                            PlacementTarget="{Binding ElementName=RedUser}">
+                            <Border
+                                MinHeight="100"
+                                Background="{StaticResource PopupBackground}"
+                                CornerRadius="10">
+                                <ListBox ItemTemplate="{StaticResource ChessDataTemplate}" ItemsSource="{Binding BlackDeads}">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Width="330" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                </ListBox>
+                            </Border>
+                        </Popup>
 
                         <Image Margin="5" Source="../Resources/Images/默认头像.png" />
                     </StackPanel>

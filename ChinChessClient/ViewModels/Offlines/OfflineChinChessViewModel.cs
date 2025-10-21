@@ -1,10 +1,7 @@
-﻿using ChinChessClient.Contracts;
-using ChinChessClient.Models;
+﻿using ChinChessClient.Models;
 using ChinChessCore.Models;
-using IceTea.Pure.Extensions;
 using IceTea.Wpf.Atom.Utils;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
-using Prism.Commands;
 
 #pragma warning disable CS8600 // 将 null 字面量或可能为 null 的值转换为非 null 类型。
 #pragma warning disable CS8602 // 解引用可能出现空引用。
@@ -23,63 +20,6 @@ internal class OfflineChinChessViewModel : OfflineChinChessViewModelBase
     public OfflineChinChessViewModel(IAppConfigFileHotKeyManager appCfgHotKeyManager)
         : base(appCfgHotKeyManager)
     {
-        this.SelectOrPutCommand = new DelegateCommand<ChinChessModel>(
-            model =>
-            {
-                if (!this.SelectOrPutCommand_ExecuteCore(model))
-                {
-                    return;
-                }
-
-                var targetData = model.Data;
-                var targetIsEmpty = model.Data.IsEmpty;
-                // 选中
-                bool canSelect = !model.Data.IsEmpty && model.Data.IsRed == this.IsRedTurn;
-                if (canSelect)
-                {
-                    if (model.TrySelect(_preMoveVisitor))
-                    {
-                        CurrentChess = model;
-
-                        this.Select_Mp3();
-
-                        this.Log(this.Name, $"选中{model.Pos}", this.IsRedTurn);
-                    }
-
-                    return;
-                }
-
-                // 移动棋子到这里 或 吃子
-                if (this.CurrentChess.IsNotNullAnd(c => this.TryPutTo(c, model.Pos)))
-                {
-                    var action = targetIsEmpty ? "移动" : "吃子";
-                    this.Log(this.Name, $"{action}{CurrentChess.Pos}=>{model.Pos}", this.IsRedTurn);
-
-                    if (targetIsEmpty)
-                    {
-                        this.Go_Mp3();
-                    }
-                    else
-                    {
-                        this.Eat_Mp3();
-                    }
-
-                    this.From = this.CurrentChess;
-                    this.To = model;
-
-                    this.CurrentChess = null;
-
-                    if (!this.CheckGameOver())
-                    {
-                        this.IsRedTurn = !IsRedTurn;
-                    }
-                }
-            },
-            model => this.Status == GameStatus.Ready && model != null && model != CurrentChess
-        )
-        .ObservesProperty(() => this.Status)
-        .ObservesProperty(() => this.IsRedTurn)
-        .ObservesProperty(() => this.CurrentChess);
     }
 
     protected override void InitDatas()

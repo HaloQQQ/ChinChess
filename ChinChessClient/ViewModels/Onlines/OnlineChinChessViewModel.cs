@@ -1,12 +1,10 @@
 ﻿using ChinChessClient.Contracts;
 using ChinChessClient.Models;
 using ChinChessCore.Models;
-using IceTea.Atom.Extensions;
 using IceTea.Pure.Contracts;
 using IceTea.Pure.Extensions;
 using IceTea.Wpf.Atom.Utils;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
-using Microsoft.AspNetCore.SignalR.Client;
 using Prism.Commands;
 using System.Windows.Input;
 
@@ -41,80 +39,7 @@ internal class OnlineChinChessViewModel : OnlineChinChessViewModelBase, IBackup
         .ObservesProperty(() => this.CommandStack.Count);
 
         this.SelectOrPutCommand = new DelegateCommand<ChinChessModel>(
-            model =>
-            {
-                if (!this.SelectOrPutCommand_ExecuteCore(model))
-                {
-                    return;
-                }
-
-                var targetIsEmpty = model.Data.IsEmpty;
-                // 选中
-                bool canSelect = !model.Data.IsEmpty && model.Data.IsRed == this.IsRedTurn;
-                if (canSelect)
-                {
-                    if (model.TrySelect(_preMoveVisitor))
-                    {
-                        CurrentChess = model;
-
-                        this.Select_Mp3();
-
-                        if (this.IsTurnToDo)
-                        {
-                            this.Log(this.Name, $"选中{new Position(model.Row, model.Column)}", this.IsRedRole == true);
-
-                            _signalr.InvokeAsync("Move", new ChessInfo
-                            {
-                                FromRed = this.IsRedRole.Value,
-                                From = new Position(CurrentChess.Row, CurrentChess.Column),
-                                To = new Position(model.Row, model.Column),
-                            }.SerializeObject());
-                        }
-                    }
-
-                    return;
-                }
-
-                // 移动棋子到这里 或 吃子
-                if (this.CurrentChess.IsNotNullAnd(c =>
-                        this.IsMock ?
-                            this.TryMockPutTo(c, new Position(model.Row, model.Column)) :
-                            this.TryPutTo(c, new Position(model.Row, model.Column)))
-                )
-                {
-                    if (this.IsTurnToDo)
-                    {
-                        var action = targetIsEmpty ? "移动" : "吃子";
-                        this.Log(this.Name, $"{action}{new Position(this.CurrentChess.Row, this.CurrentChess.Column)}=>{new Position(model.Row, model.Column)}", this.IsRedRole == true);
-
-                        _signalr.InvokeAsync("Move", new ChessInfo
-                        {
-                            FromRed = this.IsRedRole.Value,
-                            From = new Position(CurrentChess.Row, CurrentChess.Column),
-                            To = new Position(model.Row, model.Column)
-                        }.SerializeObject());
-                    }
-
-                    if (targetIsEmpty)
-                    {
-                        this.Go_Mp3();
-                    }
-                    else
-                    {
-                        this.Eat_Mp3();
-                    }
-
-                    this.From = this.CurrentChess;
-                    this.To = model;
-
-                    this.CurrentChess = null;
-
-                    if (!this.CheckGameOver())
-                    {
-                        this.IsRedTurn = !IsRedTurn;
-                    }
-                }
-            },
+            SelectOrPut_CommandExecute,
             model => this.Status == GameStatus.Ready
                 && (this.IsMock || (!this.IsMock && this.IsRedTurn == this.IsRedRole))
                 && model != null && CurrentChess != model
@@ -174,6 +99,9 @@ internal class OnlineChinChessViewModel : OnlineChinChessViewModelBase, IBackup
     }
     #endregion
 
+    public override bool TryPutTo(ChinChessModel chess, Position to)
+        => this.IsMock ? this.TryMockPutTo(chess, to) : base.TryPutTo(chess, to);
+
     #region overrides
     protected override void InitDatas()
     {
@@ -198,6 +126,8 @@ internal class OnlineChinChessViewModel : OnlineChinChessViewModelBase, IBackup
 
     protected override void InitHotKeysCore(IAppHotKeyGroup appHotkeyGroup)
     {
+        base.InitHotKeysCore(appHotkeyGroup);
+
         appHotkeyGroup.TryRegister(new AppHotKey("模拟", Key.M, ModifierKeys.Alt));
     }
 
@@ -226,7 +156,7 @@ internal class OnlineChinChessViewModel : OnlineChinChessViewModelBase, IBackup
     {
         if (this.TryPutToCore(chess, to))
         {
-            _canEatVisitor.GetChess(to.Row, to.Column).Data = chess.Data;
+            _canPutVisitor.GetChess(to.Row, to.Column).Data = chess.Data;
             chess.Data = InnerChinChess.Empty;
 
             return true;
@@ -244,7 +174,7 @@ internal class OnlineChinChessViewModel : OnlineChinChessViewModelBase, IBackup
     private ChinChessModel _backupFrom;
     private ChinChessModel _backupTo;
     private bool _backupIsRedTurn;
-    public void Backup()
+    public bool Backup()
     {
         if (!this.IsMock)
         {
@@ -260,10 +190,14 @@ internal class OnlineChinChessViewModel : OnlineChinChessViewModelBase, IBackup
             this.IsMock = true;
 
             this.Log(this.Name, "进入模拟模式", this.IsRedTurn == true);
+
+            return true;
         }
+
+        return false;
     }
 
-    public void Restore()
+    public bool Restore()
     {
         if (this.IsMock)
         {
@@ -285,7 +219,11 @@ internal class OnlineChinChessViewModel : OnlineChinChessViewModelBase, IBackup
             this.IsMock = false;
 
             this.Log(this.Name, "退出模拟模式", this.IsRedTurn == true);
+
+            return true;
         }
+
+        return false;
     }
 
     private void CleanBackup()

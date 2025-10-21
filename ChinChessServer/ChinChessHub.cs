@@ -32,6 +32,9 @@ public class ChinChessHub : Hub
         }
     }
 
+    public Task<bool> RequestHeQi()
+        => this.Request("RecvHeQiReq");
+
     public Task<bool> RequestGiveUp()
         => this.Request("RecvGiveUpReq");
 
@@ -56,6 +59,40 @@ public class ChinChessHub : Hub
         return false;
     }
 
+    public void PushJieQiDataToClients()
+    {
+        var currentUser = Context.ConnectionId;
+
+        if (_usersJieqi.TryGetValue(currentUser, out var toUser))
+        {
+            var black = GetRandSeq();
+            var red = GetRandSeq();
+
+            var seq = black.Concat(red).ToArray();
+
+            Clients.Clients(currentUser).SendAsync("ReceiveJieQi", seq);
+            Clients.Clients(toUser).SendAsync("ReceiveJieQi", seq);
+
+            IList<ChessType> GetRandSeq()
+            {
+                var seq = new List<ChessType>();
+
+                var indexs = new List<ChessType>() { ChessType.兵, ChessType.炮, ChessType.車, ChessType.兵, ChessType.馬, ChessType.相, ChessType.兵, ChessType.仕, ChessType.炮, ChessType.兵, ChessType.車, ChessType.馬, ChessType.兵, ChessType.相, ChessType.仕 };
+
+                var random = new Random();
+                for (int i = 0; i < 15; i++)
+                {
+                    var index = random.Next(0, indexs.Count);
+
+                    seq.Add(indexs[index]);
+
+                    indexs.RemoveAt(index);
+                }
+
+                return seq;
+            }
+        }
+    }
 
     private Task SendAsync(string clientId, string method)
         => Clients.Clients<IClientProxy>(clientId)
@@ -78,9 +115,6 @@ public class ChinChessHub : Hub
 
     public Task StartPause()
         => SendAsync("ReceiveStartPause");
-
-    public Task RePlay()
-        => SendAsync("ReceiveRePlay");
 
     // 连接生命周期管理
     public override async Task OnConnectedAsync()
@@ -138,35 +172,14 @@ public class ChinChessHub : Hub
                     {
                         var seqs = new List<ChessType>();
 
-                        var indexs = new List<int>() { 0, 1, 2, 0, 3, 4, 0, 5, 1, 0, 2, 3, 0, 4, 5 };
+                        var indexs = new List<ChessType>() { ChessType.兵, ChessType.炮, ChessType.車, ChessType.兵, ChessType.馬, ChessType.相, ChessType.兵, ChessType.仕, ChessType.炮, ChessType.兵, ChessType.車, ChessType.馬, ChessType.兵, ChessType.相, ChessType.仕 };
+
                         var random = new Random();
                         for (int i = 0; i < 15; i++)
                         {
                             var index = random.Next(0, indexs.Count);
 
-                            switch (indexs[index])
-                            {
-                                case 0:
-                                    seqs.Add(ChessType.兵);
-                                    break;
-                                case 1:
-                                    seqs.Add(ChessType.炮);
-                                    break;
-                                case 2:
-                                    seqs.Add(ChessType.車);
-                                    break;
-                                case 3:
-                                    seqs.Add(ChessType.馬);
-                                    break;
-                                case 4:
-                                    seqs.Add(ChessType.相);
-                                    break;
-                                case 5:
-                                    seqs.Add(ChessType.仕);
-                                    break;
-                                default:
-                                    break;
-                            }
+                            seqs.Add(indexs[index]);
 
                             indexs.RemoveAt(index);
                         }

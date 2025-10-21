@@ -16,6 +16,8 @@ internal abstract class VisitorBase : DisposableBase, IVisitor
         _datas = datas.AssertNotNull(nameof(IList<ChinChessModel>));
     }
 
+    public IEnumerable<ChinChessModel> GetChesses() => _datas;
+
     public ChinChessModel GetChess(int row, int column)
     {
         AppUtils.AssertDataValidation(
@@ -25,9 +27,11 @@ internal abstract class VisitorBase : DisposableBase, IVisitor
         return _datas[row * 9 + column];
     }
 
-    public IEnumerable<ChinChessModel> GetChesses() => _datas;
+    public ChinChessModel GetChess(Position pos) => GetChess(pos.Row, pos.Column);
 
     public InnerChinChess GetChessData(int row, int column) => GetChess(row, column).Data;
+
+    public InnerChinChess GetChessData(Position pos) => GetChessData(pos.Row, pos.Column);
 
     public abstract bool Visit(ChinChessJu chess, Position from, Position to);
     public abstract bool Visit(ChinChessMa chess, Position from, Position to);
@@ -37,6 +41,38 @@ internal abstract class VisitorBase : DisposableBase, IVisitor
     public abstract bool Visit(ChinChessShi chess, Position from, Position to);
     public abstract bool Visit(ChinChessShuai chess, Position from, Position to);
 
+    public bool FaceToFace()
+    {
+        var shuais = this.GetChesses()
+                .Where(c => c.Data.Type == ChessType.帥);
+
+        var redShuai = shuais.First(c => c.Data.IsRed == true);
+        var blackShuai = shuais.First(c => c.Data.IsRed == false);
+
+        // 王见王
+        if (redShuai.Column == blackShuai.Column)
+        {
+            int fromRow = Math.Min(redShuai.Row, blackShuai.Row);
+            int toRow = Math.Max(redShuai.Row, blackShuai.Row);
+
+            var currentRow = fromRow + 1;
+            while (currentRow < toRow)
+            {
+                var currentData = this.GetChessData(currentRow, blackShuai.Column);
+
+                if (!currentData.IsEmpty)
+                {
+                    return false;
+                }
+
+                currentRow++;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
 
     protected virtual bool TryMoveCore(InnerChinChess chess, Position from, Position to)
     {

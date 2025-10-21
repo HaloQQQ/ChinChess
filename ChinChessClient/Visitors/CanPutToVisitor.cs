@@ -6,10 +6,12 @@ using IceTea.Pure.Utils;
 #pragma warning disable CS8629 // 可为 null 的值类型可为 null。
 namespace ChinChessClient.Visitors;
 
+internal interface ICanPutToVisitor : IVisitor { }
+
 /// <summary>
 /// 检测吃子或移动
 /// </summary>
-internal class CanPutVisitor : VisitorBase, IVisitor
+internal class CanPutVisitor : VisitorBase, ICanPutToVisitor
 {
     public CanPutVisitor(IList<ChinChessModel> datas) : base(datas) { }
 

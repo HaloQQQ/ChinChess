@@ -8,5 +8,5 @@ internal interface IChineseChess
     /// 尝试选中棋子
     /// </summary>
     /// <returns></returns>
-    bool TrySelect(IVisitor canEatVisitor);
+    bool TrySelect(IPreMoveVisitor canEatVisitor);
 }

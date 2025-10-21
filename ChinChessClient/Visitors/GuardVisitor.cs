@@ -6,65 +6,78 @@ using IceTea.Pure.Utils;
 #pragma warning disable CS8625 // 无法将 null 字面量转换为非 null 的引用类型。
 namespace ChinChessClient.Visitors;
 
-/// <summary>
-/// 帅 已遇到危险，防止被 杀手 击杀
-/// 1、帅 自救
-/// 2、威胁可被击杀
-/// 3、救驾
-/// </summary>
-internal class NotFatalVisitor : VisitorBase
+interface IGuardVisitor : IVisitor
 {
-    private IVisitor _canEatVisitor;
+}
 
-    public NotFatalVisitor(IList<ChinChessModel> datas, IVisitor canEatVisitor) : base(datas)
+/// <summary>
+/// 棋子 已遇到危险，防止被 杀手 击杀
+/// 1、威胁可被击杀
+/// 2、替死
+/// </summary>
+internal class GuardVisitor : VisitorBase, IGuardVisitor
+{
+    private ICanPutToVisitor _canPutToVisitor;
+
+    public GuardVisitor(IList<ChinChessModel> datas, ICanPutToVisitor canPutToVisitor) : base(datas)
     {
-        _canEatVisitor = canEatVisitor.AssertNotNull(nameof(canEatVisitor));
+        _canPutToVisitor = canPutToVisitor.AssertNotNull(nameof(canPutToVisitor));
     }
 
-    public override bool Visit(ChinChessJu chess, Position killerPos, Position shuaiPos)
+    public override bool Visit(ChinChessJu killer, Position killerPos, Position victimPos)
     {
-        if (!this.TryMoveCore(chess, killerPos, shuaiPos))
+        if (!this.TryMoveCore(killer, killerPos, victimPos))
         {
             return true;
         }
 
-        return this.FenceFromJuOrPao(chess, killerPos, shuaiPos);
-    }
-
-    public override bool Visit(ChinChessPao chess, Position killerPos, Position shuaiPos)
-    {
-        if (!this.TryMoveCore(chess, killerPos, shuaiPos))
+        if (this.ProtectByEatKiller(killer, killerPos, victimPos))
         {
             return true;
         }
 
-        var barrier = chess.GetPaoBarrier(_canEatVisitor, killerPos, shuaiPos);
+        return this.FenceFromJuOrPao(killer, killerPos, victimPos);
+    }
+
+    public override bool Visit(ChinChessPao killer, Position killerPos, Position victimPos)
+    {
+        if (!this.TryMoveCore(killer, killerPos, victimPos))
+        {
+            return true;
+        }
+
+        if (this.ProtectByEatKiller(killer, killerPos, victimPos))
+        {
+            return true;
+        }
+
+        var barrier = killer.GetPaoBarrier(_canPutToVisitor, killerPos, victimPos);
 
         var barrierData = this.GetChessData(barrier.Row, barrier.Column);
         // 支架为敌军
-        if (chess.IsEnemy(barrierData))
+        if (killer.IsEnemy(barrierData))
         {
             // 士、相、马、兵、車、炮
-            if (barrierData.CanLeave(_canEatVisitor, barrier, killerPos.Column == shuaiPos.Column))
+            if (barrierData.CanLeave(_canPutToVisitor, barrier, killerPos.Row == victimPos.Row))
             {
                 return true;
             }
         }
 
-        return this.FenceFromJuOrPao(chess, barrier, shuaiPos);
+        return this.FenceFromJuOrPao(killer, barrier, victimPos);
     }
 
     /// <summary>
-    /// 牺牲自己拯救帅
+    /// 垫車、炮
     /// </summary>
     /// <param name="chess"></param>
-    /// <param name="from"></param>
-    /// <param name="shuaiPos"></param>
+    /// <param name="fromPos"></param>
+    /// <param name="toPos"></param>
     /// <returns></returns>
-    private bool FenceFromJuOrPao(InnerChinChess chess, Position from, Position shuaiPos)
+    private bool FenceFromJuOrPao(InnerChinChess chess, Position fromPos, Position toPos)
     {
-        int fromRow = from.Row, fromColumn = from.Column;
-        int toRow = shuaiPos.Row, toColumn = shuaiPos.Column;
+        int fromRow = fromPos.Row, fromColumn = fromPos.Column;
+        int toRow = toPos.Row, toColumn = toPos.Column;
 
         var isSameRow = fromRow == toRow;
         var isSameColumn = fromColumn == toColumn;
@@ -76,9 +89,9 @@ internal class NotFatalVisitor : VisitorBase
         var pos = new Position(currentRow, currentColumn);
 
         #region 士
-        while (from != pos && chess.IsPoseValid_Rel(ChessType.仕, pos))
+        while (fromPos != pos && chess.IsPoseValid_Rel(ChessType.仕, pos))
         {
-            if (this.TryProtect(chess, pos, shuaiPos, ChessType.仕, new[]
+            if (this.ProtectByShield(chess, pos, toPos, ChessType.仕, new[]
             {
                 new Position(pos.Row - 1, pos.Column - 1),
                 new Position(pos.Row - 1, pos.Column + 1),
@@ -97,9 +110,9 @@ internal class NotFatalVisitor : VisitorBase
         currentRow = toRow + rowStep; currentColumn = toColumn + columnStep;
         pos = new Position(currentRow, currentColumn);
 
-        while (from != pos && chess.IsPoseValid_Rel(ChessType.相, pos))
+        while (fromPos != pos && chess.IsPoseValid_Rel(ChessType.相, pos))
         {
-            if (this.TryProtect(chess, pos, shuaiPos, ChessType.相, new[]
+            if (this.ProtectByShield(chess, pos, toPos, ChessType.相, new[]
             {
                 new Position(pos.Row - 2, pos.Column - 2),
                 new Position(pos.Row - 2, pos.Column + 2),
@@ -118,9 +131,9 @@ internal class NotFatalVisitor : VisitorBase
         currentRow = toRow + rowStep; currentColumn = toColumn + columnStep;
         pos = new Position(currentRow, currentColumn);
 
-        while (pos != from)
+        while (pos != fromPos)
         {
-            if (this.TryProtect(chess, pos, shuaiPos, ChessType.兵, new[]
+            if (this.ProtectByShield(chess, pos, toPos, ChessType.兵, new[]
             {
                 new Position(pos.Row - 1, pos.Column),
                 new Position(pos.Row + 1, pos.Column),
@@ -139,9 +152,9 @@ internal class NotFatalVisitor : VisitorBase
         currentRow = toRow + rowStep; currentColumn = toColumn + columnStep;
         pos = new Position(currentRow, currentColumn);
 
-        while (pos != from)
+        while (pos != fromPos)
         {
-            if (this.TryProtect(chess, pos, shuaiPos, ChessType.馬, new[]
+            if (this.ProtectByShield(chess, pos, toPos, ChessType.馬, new[]
             {
                 new Position(toRow - 2, toColumn - 1),
                 new Position(toRow - 1, toColumn - 2),
@@ -164,7 +177,7 @@ internal class NotFatalVisitor : VisitorBase
         currentRow = toRow + rowStep; currentColumn = toColumn + columnStep;
         pos = new Position(currentRow, currentColumn);
 
-        while (pos != from)
+        while (pos != fromPos)
         {
             if (isSameColumn)
             {
@@ -200,12 +213,12 @@ internal class NotFatalVisitor : VisitorBase
                             ).Execute()
                         )
                         {
-                            if (chess.FaceToFace(_canEatVisitor))
+                            if (this.FaceToFace())
                             {
                                 return false;
                             }
 
-                            if (!this.GetChessData(shuaiPos.Row, shuaiPos.Column).IsDangerous(_canEatVisitor, shuaiPos, out _))
+                            if (!this.GetChessData(toPos.Row, toPos.Column).IsDangerous(_canPutToVisitor, toPos, out _))
                             {
                                 return true;
                             }
@@ -249,12 +262,12 @@ internal class NotFatalVisitor : VisitorBase
                             ).Execute()
                         )
                         {
-                            if (chess.FaceToFace(_canEatVisitor))
+                            if (this.FaceToFace())
                             {
                                 return false;
                             }
 
-                            if (!this.GetChessData(shuaiPos.Row, shuaiPos.Column).IsDangerous(_canEatVisitor, shuaiPos, out _))
+                            if (!this.GetChessData(toPos.Row, toPos.Column).IsDangerous(_canPutToVisitor, toPos, out _))
                             {
                                 return true;
                             }
@@ -272,17 +285,22 @@ internal class NotFatalVisitor : VisitorBase
         return false;
     }
 
-    public override bool Visit(ChinChessMa chess, Position killerPos, Position shuaiPos)
+    public override bool Visit(ChinChessMa killer, Position killerPos, Position victimPos)
     {
-        if (!this.TryMoveCore(chess, killerPos, shuaiPos))
+        if (!this.TryMoveCore(killer, killerPos, victimPos))
         {
             return true;
         }
 
-        var barrierPos = chess.GetMaBarrier(killerPos, shuaiPos);
+        if (this.ProtectByEatKiller(killer, killerPos, victimPos))
+        {
+            return true;
+        }
+
+        var barrierPos = killer.GetMaBarrier(killerPos, victimPos);
 
         #region 士
-        if (this.TryProtect(chess, barrierPos, shuaiPos, ChessType.仕, new[] {
+        if (this.ProtectByShield(killer, barrierPos, victimPos, ChessType.仕, new[] {
                 new Position(barrierPos.Row - 1, barrierPos.Column - 1),
                 new Position(barrierPos.Row - 1, barrierPos.Column + 1),
                 new Position(barrierPos.Row + 1, barrierPos.Column - 1),
@@ -294,7 +312,7 @@ internal class NotFatalVisitor : VisitorBase
         #endregion
 
         #region 相
-        if (this.TryProtect(chess, barrierPos, shuaiPos, ChessType.相, new[] {
+        if (this.ProtectByShield(killer, barrierPos, victimPos, ChessType.相, new[] {
                 new Position(barrierPos.Row - 2, barrierPos.Column - 2),
                 new Position(barrierPos.Row - 2, barrierPos.Column + 2),
                 new Position(barrierPos.Row + 2, barrierPos.Column - 2),
@@ -306,7 +324,7 @@ internal class NotFatalVisitor : VisitorBase
         #endregion
 
         #region 兵
-        if (this.TryProtect(chess, barrierPos, shuaiPos, ChessType.兵, new[] {
+        if (this.ProtectByShield(killer, barrierPos, victimPos, ChessType.兵, new[] {
                 new Position(barrierPos.Row - 1, barrierPos.Column),
                 new Position(barrierPos.Row + 1, barrierPos.Column),
                 new Position(barrierPos.Row, barrierPos.Column - 1),
@@ -318,7 +336,7 @@ internal class NotFatalVisitor : VisitorBase
         #endregion
 
         #region 马
-        if (this.TryProtect(chess, barrierPos, shuaiPos, ChessType.馬, new[] {
+        if (this.ProtectByShield(killer, barrierPos, victimPos, ChessType.馬, new[] {
                 new Position(barrierPos.Row - 2, barrierPos.Row - 1),
                 new Position(barrierPos.Row - 1, barrierPos.Row - 2),
                 new Position(barrierPos.Row - 2, barrierPos.Row + 1),
@@ -348,7 +366,7 @@ internal class NotFatalVisitor : VisitorBase
 
             while (true)
             {
-                if (!chess.IsPosValid_Abs(ChessType.炮 | ChessType.車, currentPos))
+                if (!killer.IsPosValid_Abs(ChessType.炮 | ChessType.車, currentPos))
                 {
                     return false;
                 }
@@ -361,7 +379,7 @@ internal class NotFatalVisitor : VisitorBase
                 currentPos = new Position(currentRow += rStep, currentColumn += cStep);
             }
 
-            if (chess.IsEnemy(this, currentPos, ChessType.車 | ChessType.炮))
+            if (killer.IsEnemy(this, currentPos, ChessType.車 | ChessType.炮))
             {
                 using (new MockMoveCommand(
                         this.GetChess(currentRow, currentColumn),
@@ -369,12 +387,12 @@ internal class NotFatalVisitor : VisitorBase
                     ).Execute()
                 )
                 {
-                    if (chess.FaceToFace(_canEatVisitor))
+                    if (this.FaceToFace())
                     {
                         return false;
                     }
 
-                    if (!this.GetChessData(shuaiPos.Row, shuaiPos.Column).IsDangerous(_canEatVisitor, shuaiPos, out _))
+                    if (!this.GetChessData(victimPos.Row, victimPos.Column).IsDangerous(_canPutToVisitor, victimPos, out _))
                     {
                         return true;
                     }
@@ -388,20 +406,22 @@ internal class NotFatalVisitor : VisitorBase
         return false;
     }
 
-    public override bool Visit(ChinChessBing chess, Position killerPos, Position shuaiPos)
-        => !this.TryMoveCore(chess, killerPos, shuaiPos);
-
-    public override bool Visit(ChinChessXiang chess, Position killerPos, Position shuaiPos)
+    public override bool Visit(ChinChessXiang killer, Position killerPos, Position victimPos)
     {
-        if (!this.TryMoveCore(chess, killerPos, shuaiPos))
+        if (!this.TryMoveCore(killer, killerPos, victimPos))
         {
             return true;
         }
 
-        var barrierPos = chess.GetXiangBarrier(killerPos, shuaiPos);
+        if (this.ProtectByEatKiller(killer, killerPos, victimPos))
+        {
+            return true;
+        }
+
+        var barrierPos = killer.GetXiangBarrier(killerPos, victimPos);
 
         #region 士
-        if (this.TryProtect(chess, barrierPos, shuaiPos, ChessType.仕, new[] {
+        if (this.ProtectByShield(killer, barrierPos, victimPos, ChessType.仕, new[] {
                 new Position(barrierPos.Row - 1, barrierPos.Column - 1),
                 new Position(barrierPos.Row - 1, barrierPos.Column + 1),
                 new Position(barrierPos.Row + 1, barrierPos.Column - 1),
@@ -413,7 +433,7 @@ internal class NotFatalVisitor : VisitorBase
         #endregion
 
         #region 相
-        if (this.TryProtect(chess, barrierPos, shuaiPos, ChessType.相, new[] {
+        if (this.ProtectByShield(killer, barrierPos, victimPos, ChessType.相, new[] {
                 new Position(barrierPos.Row - 2, barrierPos.Column - 2),
                 new Position(barrierPos.Row - 2, barrierPos.Column + 2),
                 new Position(barrierPos.Row + 2, barrierPos.Column - 2),
@@ -425,7 +445,7 @@ internal class NotFatalVisitor : VisitorBase
         #endregion
 
         #region 兵
-        if (this.TryProtect(chess, barrierPos, shuaiPos, ChessType.兵, new[] {
+        if (this.ProtectByShield(killer, barrierPos, victimPos, ChessType.兵, new[] {
                 new Position(barrierPos.Row - 1, barrierPos.Column),
                 new Position(barrierPos.Row + 1, barrierPos.Column),
                 new Position(barrierPos.Row, barrierPos.Column - 1),
@@ -437,7 +457,7 @@ internal class NotFatalVisitor : VisitorBase
         #endregion
 
         #region 马
-        if (this.TryProtect(chess, barrierPos, shuaiPos, ChessType.馬, new[] {
+        if (this.ProtectByShield(killer, barrierPos, victimPos, ChessType.馬, new[] {
                 new Position(barrierPos.Row - 2, barrierPos.Row - 1),
                 new Position(barrierPos.Row - 1, barrierPos.Row - 2),
                 new Position(barrierPos.Row - 2, barrierPos.Row + 1),
@@ -467,7 +487,7 @@ internal class NotFatalVisitor : VisitorBase
 
             while (true)
             {
-                if (!chess.IsPosValid_Abs(ChessType.炮 | ChessType.車, currentPos))
+                if (!killer.IsPosValid_Abs(ChessType.炮 | ChessType.車, currentPos))
                 {
                     return false;
                 }
@@ -480,7 +500,7 @@ internal class NotFatalVisitor : VisitorBase
                 currentPos = new Position(currentRow += rStep, currentColumn += cStep);
             }
 
-            if (chess.IsEnemy(this, currentPos, ChessType.車 | ChessType.炮))
+            if (killer.IsEnemy(this, currentPos, ChessType.車 | ChessType.炮))
             {
                 using (new MockMoveCommand(
                         this.GetChess(currentRow, currentColumn),
@@ -488,12 +508,12 @@ internal class NotFatalVisitor : VisitorBase
                     ).Execute()
                 )
                 {
-                    if (chess.FaceToFace(_canEatVisitor))
+                    if (this.FaceToFace())
                     {
                         return false;
                     }
 
-                    if (!this.GetChessData(shuaiPos.Row, shuaiPos.Column).IsDangerous(_canEatVisitor, shuaiPos, out _))
+                    if (!this.GetChessData(victimPos.Row, victimPos.Column).IsDangerous(_canPutToVisitor, victimPos, out _))
                     {
                         return true;
                     }
@@ -507,32 +527,56 @@ internal class NotFatalVisitor : VisitorBase
         return false;
     }
 
-    public override bool Visit(ChinChessShi chess, Position killerPos, Position shuaiPos)
-        => !this.TryMoveCore(chess, killerPos, shuaiPos);
+    public override bool Visit(ChinChessBing killer, Position killerPos, Position victimPos)
+    {
+        if (!this.TryMoveCore(killer, killerPos, victimPos))
+        {
+            return true;
+        }
 
-    public override bool Visit(ChinChessShuai chess, Position from, Position to)
-        => throw new NotImplementedException();
+        return this.ProtectByEatKiller(killer, killerPos, victimPos);
+    }
 
-    private bool TryProtect(InnerChinChess chess, Position pos, Position shuai,
+    public override bool Visit(ChinChessShi killer, Position killerPos, Position victimPos)
+    {
+        if (!this.TryMoveCore(killer, killerPos, victimPos))
+        {
+            return true;
+        }
+
+        return this.ProtectByEatKiller(killer, killerPos, victimPos);
+    }
+
+    public override bool Visit(ChinChessShuai killer, Position killerPos, Position victimPos)
+    {
+        if (!this.TryMoveCore(killer, killerPos, victimPos))
+        {
+            return true;
+        }
+
+        return this.ProtectByEatKiller(killer, killerPos, victimPos);
+    }
+
+    private bool ProtectByShield(InnerChinChess killer, Position guardToPos, Position victimPos,
                             ChessType chessType,
-                            IList<Position> positions)
+                            IList<Position> guardFromPos)
     {
-        foreach (var item in positions)
+        foreach (var item in guardFromPos)
         {
-            if (chess.CanEnemyTo(_canEatVisitor, item, pos, chessType))
+            if (killer.TryPutToIfIsEnemy(_canPutToVisitor, item, guardToPos, chessType))
             {
                 using (new MockMoveCommand(
                             this.GetChess(item.Row, item.Column),
-                            this.GetChess(pos.Row, pos.Column)
+                            this.GetChess(guardToPos.Row, guardToPos.Column)
                         ).Execute()
                     )
                 {
-                    if (chess.FaceToFace(_canEatVisitor))
+                    if (this.FaceToFace())
                     {
                         return false;
                     }
 
-                    if (!this.GetChessData(shuai.Row, shuai.Column).IsDangerous(_canEatVisitor, shuai, out _))
+                    if (!this.GetChessData(victimPos).IsDangerous(_canPutToVisitor, victimPos, out _))
                     {
                         return true;
                     }
@@ -543,27 +587,24 @@ internal class NotFatalVisitor : VisitorBase
         return false;
     }
 
-    private bool SelfRescue(InnerChinChess chess, Position shuai)
+    private bool ProtectByEatKiller(InnerChinChess killer, Position killerPos, Position victimPos)
     {
-        foreach (var item in new Position[] {
-                                new Position(shuai.Row - 1, shuai.Column),
-                                new Position(shuai.Row + 1, shuai.Column),
-                                new Position(shuai.Row, shuai.Column - 1),
-                                new Position(shuai.Row, shuai.Column + 1)
-                            })
+        if (killer.IsDangerous(_canPutToVisitor, killerPos, out ChinChessModel guard))
         {
-            if (chess.CanEnemyTo(_canEatVisitor, shuai, item, ChessType.帥))
-            {
-                using (new MockMoveCommand(
-                            this.GetChess(shuai.Row, shuai.Column),
-                            this.GetChess(item.Row, item.Column)
+            using (new MockMoveCommand(
+                            this.GetChess(guard.Pos.Row, guard.Pos.Column),
+                            this.GetChess(killerPos.Row, killerPos.Column)
                         ).Execute()
                     )
+            {
+                if (this.FaceToFace())
                 {
-                    if (!this.GetChessData(item.Row, item.Column).IsDangerous(_canEatVisitor, item, out _))
-                    {
-                        return true;
-                    }
+                    return false;
+                }
+
+                if (!this.GetChessData(victimPos).IsDangerous(_canPutToVisitor, victimPos, out _))
+                {
+                    return true;
                 }
             }
         }
@@ -571,40 +612,37 @@ internal class NotFatalVisitor : VisitorBase
         return false;
     }
 
-    protected override bool TryMoveCore(InnerChinChess chess, Position from, Position to)
+    /// <summary>
+    /// 检查坐标
+    /// 检查双方阵营
+    /// 检查杀手是否可被击杀
+    /// </summary>
+    /// <param name="killer"></param>
+    /// <param name="killerPos"></param>
+    /// <param name="victimPos"></param>
+    /// <returns></returns>
+    protected override bool TryMoveCore(InnerChinChess killer, Position killerPos, Position victimPos)
     {
-        if (!base.TryMoveCore(chess, from, to))
+        if (!base.TryMoveCore(killer, killerPos, victimPos))
         {
             return false;
         }
 
-        if (from == to)
+        if (killerPos == victimPos)
         {
             return false;
         }
 
-        if (!chess.IsEnemy(this, to, ChessType.帥))
+        if (!killer.IsPosValid(killerPos))
         {
             return false;
         }
 
-        if (!chess.IsPosValid(from) || !chess.IsPosValid_Abs(ChessType.帥, to))
-        {
-            return false;
-        }
+        var targetData = this.GetChessData(victimPos.Row, victimPos.Column);
 
-        //AppUtils.AssertDataValidation(this.GetChessData(from.Row, from.Column) == chess, $"{chess.Type}不在{from.ToString()}");
-
-        var targetData = this.GetChessData(to.Row, to.Column);
-
-        bool prevent = chess.IsEmpty || (!targetData.IsEmpty && chess.IsRed == targetData.IsRed);
+        bool prevent = killer.IsEmpty || !killer.IsEnemy(targetData);
 
         if (prevent)
-        {
-            return false;
-        }
-
-        if (this.SelfRescue(chess, to) || chess.IsDangerous(_canEatVisitor, from, out _))
         {
             return false;
         }
@@ -614,7 +652,7 @@ internal class NotFatalVisitor : VisitorBase
 
     protected override void DisposeCore()
     {
-        _canEatVisitor = null;
+        _canPutToVisitor = null;
 
         base.DisposeCore();
     }

@@ -7,17 +7,19 @@ using IceTea.Pure.Utils;
 #pragma warning disable CS8625 // 无法将 null 字面量转换为非 null 的引用类型。
 namespace ChinChessClient.Visitors;
 
+internal interface IPreMoveVisitor : IVisitor { }
+
 /// <summary>
 /// 选中棋子时显示可走的棋路
 /// 传入的To:Postion 不使用
 /// </summary>
-internal class PreMoveVisitor : VisitorBase
+internal class PreMoveVisitor : VisitorBase, IPreMoveVisitor
 {
-    private IVisitor _canEatVisitor;
+    private ICanPutToVisitor _canPutToVisitor;
 
-    public PreMoveVisitor(IList<ChinChessModel> datas, IVisitor canEatVisitor) : base(datas)
+    public PreMoveVisitor(IList<ChinChessModel> datas, ICanPutToVisitor canPutToVisitor) : base(datas)
     {
-        _canEatVisitor = canEatVisitor.AssertNotNull(nameof(canEatVisitor));
+        _canPutToVisitor = canPutToVisitor.AssertNotNull(nameof(canPutToVisitor));
     }
 
     public override bool Visit(ChinChessJu chess, Position from, Position _)
@@ -161,7 +163,7 @@ internal class PreMoveVisitor : VisitorBase
         {
             int toRow = from.Row + rowStep, toColumn = from.Column + columnStep;
 
-            if (fromData.Accept(_canEatVisitor, from, new Position(toRow, toColumn)))
+            if (fromData.Accept(_canPutToVisitor, from, new Position(toRow, toColumn)))
             {
                 this.GetChess(toRow, toColumn).IsReadyToPut = true;
 
@@ -190,7 +192,7 @@ internal class PreMoveVisitor : VisitorBase
         {
             int toRow = from.Row + rowStep, toColumn = from.Column + columnStep;
 
-            if (fromData.Accept(_canEatVisitor, from, new Position(toRow, toColumn)))
+            if (fromData.Accept(_canPutToVisitor, from, new Position(toRow, toColumn)))
             {
                 this.GetChess(toRow, toColumn).IsReadyToPut = true;
 
@@ -219,7 +221,7 @@ internal class PreMoveVisitor : VisitorBase
         {
             int toRow = from.Row + rowStep, toColumn = from.Column + columnStep;
 
-            if (fromData.Accept(_canEatVisitor, from, new Position(toRow, toColumn)))
+            if (fromData.Accept(_canPutToVisitor, from, new Position(toRow, toColumn)))
             {
                 this.GetChess(toRow, toColumn).IsReadyToPut = true;
 
@@ -248,7 +250,7 @@ internal class PreMoveVisitor : VisitorBase
         {
             int toRow = from.Row + rowStep, toColumn = from.Column + columnStep;
 
-            if (fromData.Accept(_canEatVisitor, from, new Position(toRow, toColumn)))
+            if (fromData.Accept(_canPutToVisitor, from, new Position(toRow, toColumn)))
             {
                 this.GetChess(toRow, toColumn).IsReadyToPut = true;
 
@@ -277,7 +279,7 @@ internal class PreMoveVisitor : VisitorBase
         {
             int toRow = from.Row + rowStep, toColumn = from.Column + columnStep;
 
-            if (fromData.Accept(_canEatVisitor, from, new Position(toRow, toColumn)))
+            if (fromData.Accept(_canPutToVisitor, from, new Position(toRow, toColumn)))
             {
                 this.GetChess(toRow, toColumn).IsReadyToPut = true;
 
@@ -290,7 +292,7 @@ internal class PreMoveVisitor : VisitorBase
 
     protected override bool TryMoveCore(InnerChinChess chess, Position from, Position _)
     {
-        if(!base.TryMoveCore(chess, from, _))
+        if (!base.TryMoveCore(chess, from, _))
         {
             return false;
         }
@@ -300,14 +302,14 @@ internal class PreMoveVisitor : VisitorBase
             return false;
         }
 
-       this.GetChesses().ForEach(c => c.IsReadyToPut = false);
+        this.GetChesses().ForEach(c => c.IsReadyToPut = false);
 
         return true;
     }
 
     protected override void DisposeCore()
     {
-        _canEatVisitor = null;
+        _canPutToVisitor = null;
 
         base.DisposeCore();
     }

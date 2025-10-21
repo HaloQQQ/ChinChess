@@ -1,35 +1,11 @@
 BusinessConfig:
   ServerUrl: http://localhost:6666/ChinChess
+  NeedWarn: true
   HotKeys:
     App:
-      象棋:
-        重玩: 重玩 (Alt+R+True)
-        播放/暂停: 播放/暂停 (Space+True)
-        悔棋: 悔棋 (Control+Z+True)
-        棋盘换向: 棋盘换向 (Alt+D+True)
-        模拟: 模拟 (Alt+M+True)
-      揭棋:
-        重玩: 重玩 (Alt+R+True)
-        播放/暂停: 播放/暂停 (Space+True)
-        悔棋: 悔棋 (Control+Z+True)
-        棋盘换向: 棋盘换向 (Alt+D+True)
-        模拟: 模拟 (Alt+M+True)
-      揭棋在线版:
-        重玩: 重玩 (Alt+R+True)
-        悔棋: 悔棋 (Control+Z+True)
-        棋盘换向: 棋盘换向 (Alt+D+True)
-        模拟: 模拟 (Alt+M+True)
       在线版:
         重玩: 重玩 (Alt+R+True)
         悔棋: 悔棋 (Control+Z+True)
         棋盘换向: 棋盘换向 (Alt+D+True)
         模拟: 模拟 (Alt+M+True)
-      本地版:
-        重玩: 重玩 (Alt+R+True)
-        悔棋: 悔棋 (Control+Z+True)
-        棋盘换向: 棋盘换向 (Alt+D+True)
-        模拟: 模拟 (Alt+M+True)
-      本地版揭棋:
-        重玩: 重玩 (Alt+R+True)
-        悔棋: 悔棋 (Control+Z+True)
-        棋盘换向: 棋盘换向 (Alt+D+True)
+        认输: 认输 (Alt+F+True)

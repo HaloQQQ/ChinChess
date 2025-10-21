@@ -8,6 +8,11 @@ using Microsoft.AspNetCore.SignalR.Client;
 using System.Windows;
 using System.Windows.Input;
 using Prism.Commands;
+using ChinChessClient.Models;
+using DryIoc;
+using Prism.Ioc;
+using Prism.Regions;
+using IceTea.Pure.Utils;
 
 #pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
 #pragma warning disable CS8602 // 解引用可能出现空引用。
@@ -29,15 +34,30 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
 
     public OnlineChinChessViewModelBase(IAppConfigFileHotKeyManager appCfgHotKeyManager, IConfigManager configManager) : base(appCfgHotKeyManager)
     {
-        this.Status = GameStatus.NotInitialized;
+        try
+        {
+            AppUtils.StartProcess("ChinChessServer.exe");
 
-        this.InitSignalR(configManager);
+            this.Status = GameStatus.NotInitialized;
 
-        GiveUpCommand = new DelegateCommand(
-            GiveUp_CommandExecute,
-            () => this.Status == GameStatus.Ready
-            )
-            .ObservesProperty(() => this.Status);
+            this.InitSignalR(configManager);
+
+            HeQiCommand = new DelegateCommand(
+                HeQi_CommandExecute,
+                () => this.Status == GameStatus.Ready
+                )
+                .ObservesProperty(() => this.Status);
+
+            GiveUpCommand = new DelegateCommand(
+                GiveUp_CommandExecute,
+                () => this.Status == GameStatus.Ready
+                )
+                .ObservesProperty(() => this.Status);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message);
+        }
     }
 
     private async Task InitSignalR(IConfigManager configManager)
@@ -51,6 +71,33 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
         _signalr.On("ReceiveConnected", () => _signalr.InvokeAsync("ClientConnected", this.Mode));
 
         _signalr.On<bool>("ReceiveRole", isRed => this.IsRedRole = isRed);
+
+        _signalr.On("RecvHeQiReq", () =>
+        {
+            var tempStatus = this.Status;
+            this._status = GameStatus.NotReady;
+            RaisePropertyChanged(nameof(Status));
+
+            var result = MessageBox.Show("对方请求和棋，是否同意？", "和棋", MessageBoxButton.YesNo);
+
+            var allowHeQi = result == MessageBoxResult.Yes;
+            var msg = "对方请求和棋，已" + (allowHeQi ? "同意" : "拒绝");
+
+            this.PublishMsg(msg);
+            this.Log(this.Name, msg, this.IsRedRole == true);
+
+            if (allowHeQi)
+            {
+                this.Status = GameStatus.Stoped;
+            }
+            else
+            {
+                this._status = tempStatus;
+                RaisePropertyChanged(nameof(Status));
+            }
+
+            return allowHeQi;
+        });
 
         _signalr.On("RecvGiveUpReq", () =>
         {
@@ -106,19 +153,19 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
             var result = MessageBox.Show("对方请求重玩，是否同意？", "重玩", MessageBoxButton.YesNo);
 
             var allowReplay = result == MessageBoxResult.Yes;
+
+            if (allowReplay)
+            {
+                base.RePlay_CommandExecute();
+                _signalr.InvokeAsync("PushJieQiDataToClients");
+            }
+
             var msg = "对方请求重玩，已" + (allowReplay ? "同意" : "拒绝");
 
             this.PublishMsg(msg);
             this.Log(this.Name, msg, this.IsRedRole == true);
 
             return allowReplay;
-        });
-
-        _signalr.On("ReceiveRePlay", () =>
-        {
-            this.Log(this.Name, "收到重玩通知", this.IsRedRole == false);
-
-            base.RePlay_CommandExecute();
         });
 
         _signalr.On("ReceiveWait", () =>
@@ -139,15 +186,15 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
             }
             else
             {
-                if (_canEatVisitor != null)
+                if (_canPutVisitor != null)
                 {
-                    var action = _canEatVisitor.GetChessData(chessInfo.To.Row, chessInfo.To.Column).IsEmpty
+                    var action = _canPutVisitor.GetChessData(chessInfo.To.Row, chessInfo.To.Column).IsEmpty
                                     ? "移动" : "吃子";
                     this.Log(this.Name, $"收到{action}通知{chessInfo.From}=>{chessInfo.To}", this.IsRedRole == false);
                 }
             }
 
-            var data = _canEatVisitor.GetChess(chessInfo.To.Row, chessInfo.To.Column);
+            var data = _canPutVisitor.GetChess(chessInfo.To.Row, chessInfo.To.Column);
             this.SelectOrPutCommand.Execute(data);
         });
 
@@ -157,8 +204,20 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
         }
         catch (Exception ex)
         {
+            var regionManager = ContainerLocator.Current.Resolve<IRegionManager>();
+            regionManager.Regions["ChinChessRegion"].NavigationService.Journal.GoBack();
+
             MessageBox.Show($"服务器未启动..{AppStatics.NewLineChars}{ex.Message}");
         }
+    }
+
+    protected override void InitHotKeysCore(IAppHotKeyGroup appHotkeyGroup)
+    {
+        base.InitHotKeysCore(appHotkeyGroup);
+
+        appHotkeyGroup.TryRegister(new AppHotKey("认输", Key.F, ModifierKeys.Alt));
+
+        appHotkeyGroup.TryRegister(new AppHotKey("和棋", Key.H, ModifierKeys.Alt));
     }
 
     #region Timer
@@ -197,6 +256,30 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
         protected set => SetProperty<int>(ref _redSeconds, value);
     }
     #endregion
+
+    private async void HeQi_CommandExecute()
+    {
+        var tempStatus = this.Status;
+        this._status = GameStatus.NotReady;
+        RaisePropertyChanged(nameof(Status));
+
+        bool allowGiveUp = await _signalr.InvokeAsync<bool>("RequestHeQi");
+
+        if (allowGiveUp)
+        {
+            this.Status = GameStatus.Stoped;
+        }
+        else
+        {
+            this._status = tempStatus;
+            RaisePropertyChanged(nameof(Status));
+        }
+
+        var msg = "请求和棋，对方" + (allowGiveUp ? "同意" : "拒绝");
+
+        this.PublishMsg(msg);
+        this.Log(this.Name, msg, this.IsRedRole == true);
+    }
 
     private async void GiveUp_CommandExecute()
     {
@@ -240,8 +323,83 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
         }
     }
 
+    protected override void SelectOrPut_CommandExecute(ChinChessModel model)
+    {
+        if (!this.SelectOrPut_CommandExecuteCore(model))
+        {
+            return;
+        }
+
+        var targetIsEmpty = model.Data.IsEmpty;
+        // 选中
+        bool canSelect = !model.Data.IsEmpty && model.Data.IsRed == this.IsRedTurn;
+        if (canSelect)
+        {
+            if (model.TrySelect(_preMoveVisitor))
+            {
+                CurrentChess = model;
+
+                this.Select_Mp3();
+
+                if (this.IsTurnToDo)
+                {
+                    this.Log(this.Name, $"选中{model.Pos}", this.IsRedRole == true);
+
+                    _signalr.InvokeAsync("Move", new ChessInfo
+                    {
+                        FromRed = this.IsRedRole == true,
+                        From = CurrentChess.Pos,
+                        To = model.Pos,
+                    }.SerializeObject());
+                }
+            }
+
+            return;
+        }
+
+        // 移动棋子到这里 或 吃子
+        if (this.CurrentChess.IsNotNullAnd(c => this.TryPutTo(c, model.Pos)))
+        {
+            if (this.IsTurnToDo)
+            {
+                var action = targetIsEmpty ? "移动" : "吃子";
+                this.Log(this.Name, $"{action}{CurrentChess.Pos}=>{model.Pos}", this.IsRedRole == true);
+
+                _signalr.InvokeAsync("Move", new ChessInfo
+                {
+                    FromRed = this.IsRedRole == true,
+                    From = CurrentChess.Pos,
+                    To = model.Pos
+                }.SerializeObject());
+            }
+
+            if (targetIsEmpty)
+            {
+                this.Go_Mp3();
+            }
+            else
+            {
+                this.Eat_Mp3();
+            }
+
+            this.From = this.CurrentChess;
+            this.To = model;
+
+            this.CurrentChess = null;
+
+            if (!this.IsGameOver())
+            {
+                this.IsRedTurn = !IsRedTurn;
+            }
+        }
+    }
+
     protected override async void Revoke_CommandExecute()
     {
+        var tempStatus = this.Status;
+        this._status = GameStatus.NotReady;
+        RaisePropertyChanged(nameof(Status));
+
         bool allowRevoke = await _signalr.InvokeAsync<bool>("RequestRevoke");
 
         this.PublishMsg("悔棋请求被" + (allowRevoke ? "同意" : "拒绝"));
@@ -258,10 +416,17 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
 
             _signalr.InvokeAsync("Revoke");
         }
+
+        this._status = tempStatus;
+        RaisePropertyChanged(nameof(Status));
     }
 
     protected override async void RePlay_CommandExecute()
     {
+        var tempStatus = this.Status;
+        this._status = GameStatus.NotReady;
+        RaisePropertyChanged(nameof(Status));
+
         bool allowReplay = await _signalr.InvokeAsync<bool>("RequestReplay");
 
         this.PublishMsg("重玩请求被" + (allowReplay ? "同意" : "拒绝"));
@@ -275,9 +440,10 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
             base.RePlay_CommandExecute();
 
             this.Log(this.Name, "重玩", this.IsRedRole == true);
-
-            _signalr.InvokeAsync("RePlay");
         }
+
+        this._status = tempStatus;
+        RaisePropertyChanged(nameof(Status));
     }
     #endregion
 
@@ -317,13 +483,16 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
             this.RedSeconds = Seconds;
         }
     }
+
     #endregion
 
+    public ICommand HeQiCommand { get; private set; }
     public ICommand GiveUpCommand { get; private set; }
 
     protected override void DisposeCore()
     {
         GiveUpCommand = null;
+        HeQiCommand = null;
 
         _signalr.DisposeAsync();
         _signalr = null;

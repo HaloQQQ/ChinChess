@@ -17,7 +17,7 @@ internal class ChinChessPao : InnerChinChess
     public override bool Accept(IVisitor visitor, Position from, Position to)
         => visitor.Visit(this, from, to);
 
-    public override bool CanLeave(IVisitor canEatVisitor, Position from, bool isHorizontal = true)
+    public override bool CanLeave(ICanPutToVisitor canPutToVisitor, Position from, bool isHorizontal = true)
     {
         var rowStep = isHorizontal ? 1 : 0;
         var columnStep = isHorizontal == false ? 1 : 0;
@@ -28,7 +28,7 @@ internal class ChinChessPao : InnerChinChess
                                 })
         {
             if (this.IsPosValid_Abs(ChessType.炮, item, false)
-                && canEatVisitor.GetChessData(item.Row, item.Column).IsEmpty
+                && canPutToVisitor.GetChessData(item.Row, item.Column).IsEmpty
                 )
             {
                 return true;
@@ -41,7 +41,7 @@ internal class ChinChessPao : InnerChinChess
 
         while (currentRow.IsInRange(0, 9) && currentColumn.IsInRange(0, 8))
         {
-            InnerChinChess current = canEatVisitor.GetChessData(currentRow, currentColumn);
+            InnerChinChess current = canPutToVisitor.GetChessData(currentRow, currentColumn);
             if (!current.IsEmpty)
             {
                 mountainsCount++;
@@ -64,7 +64,7 @@ internal class ChinChessPao : InnerChinChess
         return false;
     }
 
-    public Position GetPaoBarrier(IVisitor visitor, Position from, Position to)
+    public Position GetPaoBarrier(ICanPutToVisitor visitor, Position from, Position to)
     {
         AppUtils.AssertDataValidation(visitor.GetChessData(from.Row, from.Column) == this, $"{this.Type}应该在{from.ToString()}");
 

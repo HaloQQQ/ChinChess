@@ -6,6 +6,7 @@ using ChinChessCore.Models;
 using IceTea.Pure.Extensions;
 using IceTea.Wpf.Atom.Utils;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
+using System.Collections.ObjectModel;
 
 #pragma warning disable CS8625 // 无法将 null 字面量转换为非 null 的引用类型。
 namespace ChinChessClient.ViewModels;
@@ -14,18 +15,89 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
 {
     public abstract ChinChessMode Mode { get; }
 
-    protected IVisitor _canEatVisitor;
-    protected IVisitor _preMoveVisitor;
-    private IVisitor _notFatalVisitor;
+    public ObservableCollection<InnerChinChess> BlackDeads { get; private set; } = new();
+    public ObservableCollection<InnerChinChess> RedDeads { get; private set; } = new();
+
+    protected CanPutVisitor _canPutVisitor;
+    protected IPreMoveVisitor _preMoveVisitor;
+    private IGuardVisitor _guardVisitor;
 
     protected ChinChessViewModelBase(IAppConfigFileHotKeyManager appCfgHotKeyManager) : base(appCfgHotKeyManager)
     {
-        this._canEatVisitor = new CanPutVisitor(this.Datas);
-        this._preMoveVisitor = new PreMoveVisitor(this.Datas, _canEatVisitor);
-        this._notFatalVisitor = new NotFatalVisitor(this.Datas, _canEatVisitor);
+        this._canPutVisitor = new CanPutVisitor(this.Datas);
+        this._preMoveVisitor = new PreMoveVisitor(this.Datas, _canPutVisitor);
+        this._guardVisitor = new GuardVisitor(this.Datas, _canPutVisitor);
     }
 
-    protected bool SelectOrPutCommand_ExecuteCore(ChinChessModel model)
+    protected override void OnGameStatusChanged(GameStatus newStatus)
+    {
+        base.OnGameStatusChanged(newStatus);
+
+        switch (newStatus)
+        {
+            case GameStatus.Ready:
+                WpfAtomUtils.BeginInvoke(() =>
+                {
+                    this.RedDeads.Clear();
+                    this.BlackDeads.Clear();
+                });
+                break;
+            default:
+                break;
+        }
+    }
+
+    protected virtual bool PushDead(InnerChinChess chess)
+    {
+        if (chess.IsEmpty)
+        {
+            return false;
+        }
+
+        if (chess.IsRed == true)
+        {
+            WpfAtomUtils.InvokeAtOnce(() =>
+            {
+                this.RedDeads.Add(chess);
+            });
+        }
+        else
+        {
+            WpfAtomUtils.InvokeAtOnce(() =>
+            {
+                this.BlackDeads.Add(chess);
+            });
+        }
+
+        return true;
+    }
+
+    protected virtual bool ReturnDead(InnerChinChess chess)
+    {
+        if (chess.IsEmpty)
+        {
+            return false;
+        }
+
+        if (chess.IsRed == true)
+        {
+            WpfAtomUtils.InvokeAtOnce(() =>
+            {
+                this.RedDeads.Remove(chess);
+            });
+        }
+        else
+        {
+            WpfAtomUtils.InvokeAtOnce(() =>
+            {
+                this.BlackDeads.Remove(chess);
+            });
+        }
+
+        return true;
+    }
+
+    protected bool SelectOrPut_CommandExecuteCore(ChinChessModel model)
     {
         var targetIsEmpty = model.Data.IsEmpty;
 
@@ -46,17 +118,17 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
 
     protected bool TryPutToCore(ChinChessModel chess, Position to)
     {
-        var target = _canEatVisitor.GetChess(to.Row, to.Column);
+        var target = _canPutVisitor.GetChess(to.Row, to.Column);
         if (target.IsReadyToPut)
         {
             using (new MockMoveCommand(chess, target).Execute())
             {
-                var shuai = _canEatVisitor.GetChesses().FirstOrDefault(c => c.Data.Type == ChessType.帥 && c.Data.IsRed == target.Data.IsRed);
+                var shuai = _canPutVisitor.GetChesses().FirstOrDefault(c => c.Data.Type == ChessType.帥 && c.Data.IsRed == target.Data.IsRed);
 
                 if (shuai != null)
                 {
-                    if (shuai.Data.FaceToFace(_canEatVisitor)
-                        || shuai.Data.IsDangerous(_canEatVisitor, new Position(shuai.Row, shuai.Column), out _))
+                    if (_canPutVisitor.FaceToFace()
+                        || shuai.Data.IsDangerous(_canPutVisitor, shuai.Pos, out _))
                     {
                         this.PublishMsg("走子后送将啊，带佬");
 
@@ -65,7 +137,7 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
                 }
             }
 
-            _canEatVisitor.GetChesses().ForEach(c => c.IsReadyToPut = false);
+            this.Datas.ForEach(c => c.IsReadyToPut = false);
 
             return true;
         }
@@ -73,16 +145,23 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
         return false;
     }
 
+    protected virtual void PreMove(ChinChessModel chess) { }
+
     public virtual bool TryPutTo(ChinChessModel chess, Position to)
     {
         if (this.TryPutToCore(chess, to))
         {
+            this.PreMove(chess);
+
             var command = new MoveCommand(
                                     CommandStack.Count + 1,
                                     chess.Data.IsRed == true,
-                                    chess, _canEatVisitor.GetChess(to.Row, to.Column)
-                                )
-                            .Execute();
+                                    chess, _canPutVisitor.GetChess(to.Row, to.Column),
+                                    this.PushDead,
+                                    this.ReturnDead
+                                );
+
+            command.Execute();
 
             WpfAtomUtils.BeginInvoke(() =>
             {
@@ -104,50 +183,78 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
             item.IsReadyToPut = false;
         }
 
-        this.CheckGameOver();
+        this.IsGameOver();
     }
 
-    protected override bool CheckGameOver()
+    protected override bool IsGameOver()
     {
         bool isRedWin = false;
 
         foreach (ChinChessModel item in this.Datas.Where(c => !c.Data.IsEmpty))
         {
+            if (!this._needWarn && item.Data.Type != ChessType.帥)
+            {
+                continue;
+            }
+
             var isGameOver = false;
 
-            var pos = item.Pos;
-            var isDangerous = item.Data.IsDangerous(_canEatVisitor, pos, out ChinChessModel killer);
+            var isDangerous = item.Data.IsDangerous(_canPutVisitor, item.Pos, out ChinChessModel killer);
 
             if (isDangerous)
             {
-                if (!killer.Data.CanBeProtected(
-                        _notFatalVisitor,
-                        killer.Pos,
-                        pos)
-                    )
+                if (item.Data.Type != ChessType.帥)
                 {
-                    if (item.Data is ChinChessShuai shuai)
+                    using (new MockMoveCommand(killer, item).Execute())
                     {
-                        isRedWin = shuai.IsRed == false;
-
-                        isGameOver = true;
+                        if (item.Data.IsDangerous(_canPutVisitor, item.Pos, out _))
+                        {
+                            isDangerous = false;
+                        }
                     }
                 }
                 else
                 {
-                    if (item.Data is ChinChessShuai)
+                    if (!killer.Data.CanBeProtected(
+                            _guardVisitor,
+                            killer.Pos,
+                            item.Pos)
+                       )
                     {
-                        this.JiangJun_Mp3();
+                        if (item.Data is ChinChessShuai shuai)
+                        {
+                            if (!shuai.SelfRescue(_canPutVisitor, item.Pos))
+                            {
+                                isRedWin = shuai.IsRed == false;
+
+                                isGameOver = true;
+                            }
+                            else
+                            {
+                                this.JiangJun_Mp3();
+                            }
+                        }
                     }
                     else
                     {
-                        using (new MockMoveCommand(killer, item).Execute())
+                        if (item.Data is ChinChessShuai)
                         {
-                            if (item.Data.IsDangerous(_canEatVisitor, item.Pos, out _))
-                            {
-                                isDangerous = false;
-                            }
+                            this.JiangJun_Mp3();
                         }
+                    }
+                }
+            }
+            else
+            {
+                if (item.Data.Type == ChessType.帥)
+                {
+                    int count = this.Datas.Count(c => c.Data.IsRed == item.Data.IsRed);
+
+                    if (count == 1 && item.Data is ChinChessShuai shuai && !shuai.SelfRescue(_canPutVisitor, item.Pos))
+                    {
+                        isRedWin = shuai.IsRed == false;
+
+                        isGameOver = true;
                     }
                 }
             }
@@ -185,15 +292,29 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
 
     protected override void DisposeCore()
     {
-        this._notFatalVisitor.Dispose();
-        this._notFatalVisitor = null;
+        base.DisposeCore();
+
+        this._guardVisitor.Dispose();
+        this._guardVisitor = null;
 
         this._preMoveVisitor.Dispose();
         this._preMoveVisitor = null;
 
-        this._canEatVisitor.Dispose();
-        this._canEatVisitor = null;
+        this._canPutVisitor.Dispose();
+        this._canPutVisitor = null;
 
-        base.DisposeCore();
+        foreach (var item in this.BlackDeads)
+        {
+            item.Dispose();
+        }
+        this.BlackDeads.Clear();
+        this.BlackDeads = null;
+
+        foreach (var item in this.RedDeads)
+        {
+            item.Dispose();
+        }
+        this.RedDeads.Clear();
+        this.RedDeads = null;
     }
 }

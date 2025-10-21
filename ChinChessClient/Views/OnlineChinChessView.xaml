@@ -32,6 +32,16 @@
             Key="{Binding KeyGestureDic[模拟].SelectedKey}"
             Command="{Binding MockCommand}"
             Modifiers="{Binding KeyGestureDic[模拟].ModifierKey}" />
+
+        <KeyBinding
+            Key="{Binding KeyGestureDic[认输].SelectedKey}"
+            Command="{Binding GiveUpCommand}"
+            Modifiers="{Binding KeyGestureDic[认输].ModifierKey}" />
+
+        <KeyBinding
+            Key="{Binding KeyGestureDic[和棋].SelectedKey}"
+            Command="{Binding HeQiCommand}"
+            Modifiers="{Binding KeyGestureDic[和棋].ModifierKey}" />
     </UserControl.InputBindings>
 
     <Grid>
@@ -69,7 +79,7 @@
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type models:Record}">
                         <TextBlock Style="{StaticResource {x:Type TextBlock}}">
-                            <TextBlock>
+                            <TextBlock TextWrapping="Wrap">
                                 <TextBlock Text="{Binding Id}" />
                                 )
                                 <TextBlock Text="{Binding Time, StringFormat='MM-dd HH:mm:ss'}" />
@@ -108,7 +118,7 @@
                             </Border.Style>
                         </Border>
 
-                        <Ellipse HorizontalAlignment="Left">
+                        <Ellipse x:Name="BlackUser" HorizontalAlignment="Left">
                             <Ellipse.Fill>
                                 <ImageBrush ImageSource="../Resources/Pictures/黑将.png" />
                             </Ellipse.Fill>
@@ -122,6 +132,23 @@
                                 </Style>
                             </Ellipse.Style>
                         </Ellipse>
+                        <Popup
+                            MyAttachProperty.IsAppearOnHovered="True"
+                            Placement="Bottom"
+                            PlacementTarget="{Binding ElementName=BlackUser}">
+                            <Border
+                                MinHeight="100"
+                                Background="{StaticResource PopupBackground}"
+                                CornerRadius="10">
+                                <ListBox ItemTemplate="{StaticResource ChessDataTemplate}" ItemsSource="{Binding RedDeads}">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Width="330" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                </ListBox>
+                            </Border>
+                        </Popup>
 
                         <TextBlock
                             Margin="3"
@@ -140,7 +167,10 @@
                             Style="{StaticResource TextBlock_Theme}"
                             Text="{Binding RedTimeSpan, FallbackValue=00:00:00}" />
 
-                        <Ellipse Grid.Row="1" Grid.Column="0">
+                        <Ellipse
+                            x:Name="RedUser"
+                            Grid.Row="1"
+                            Grid.Column="0">
                             <Ellipse.Fill>
                                 <ImageBrush ImageSource="../Resources/Pictures/红帅.png" />
                             </Ellipse.Fill>
@@ -154,6 +184,23 @@
                                 </Style>
                             </Ellipse.Style>
                         </Ellipse>
+                        <Popup
+                            MyAttachProperty.IsAppearOnHovered="True"
+                            Placement="Bottom"
+                            PlacementTarget="{Binding ElementName=RedUser}">
+                            <Border
+                                MinHeight="100"
+                                Background="{StaticResource PopupBackground}"
+                                CornerRadius="10">
+                                <ListBox ItemTemplate="{StaticResource ChessDataTemplate}" ItemsSource="{Binding BlackDeads}">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Width="330" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                </ListBox>
+                            </Border>
+                        </Popup>
 
                         <Border Margin="5">
                             <Grid>
@@ -188,6 +235,8 @@
                         <Button IsEnabled="{Binding IsMock, Converter={StaticResource OppositeBoolConverter}}" Style="{StaticResource MockButton}" />
 
                         <Button Style="{StaticResource GiveUpButton}" />
+
+                        <Button Style="{StaticResource HeQiButton}" />
                     </UniformGrid>
                 </DockPanel>
 

@@ -67,7 +67,7 @@ internal abstract class GameViewModelBase<T> : NotifyBase,
     }
 
     #region Logicals
-    protected abstract bool CheckGameOver();
+    protected abstract bool IsGameOver();
 
     protected void InitHotKeys(IAppConfigFileHotKeyManager appCfgFileHotkeyManager)
     {
@@ -102,7 +102,7 @@ internal abstract class GameViewModelBase<T> : NotifyBase,
 
         foreach (var item in this.CommandStack)
         {
-            item.Dispose();
+            item.Destory();
         }
 
         WpfAtomUtils.BeginInvoke(this.CommandStack.Clear);
@@ -145,6 +145,8 @@ internal abstract class GameViewModelBase<T> : NotifyBase,
 
     #region Props
     protected abstract string Name { get; }
+
+    protected bool _needWarn;
 
     public Dictionary<string, IHotKey<Key, ModifierKeys>> KeyGestureDic { get; private set; }
 
@@ -267,6 +269,8 @@ internal abstract class GameViewModelBase<T> : NotifyBase,
     #region Commands
     public ICommand SelectOrPutCommand { get; protected set; }
 
+    protected abstract void SelectOrPut_CommandExecute(T model);
+
     public ICommand RevokeCommand { get; protected set; }
     protected virtual void Revoke_CommandExecute()
     {
@@ -281,9 +285,9 @@ internal abstract class GameViewModelBase<T> : NotifyBase,
                 this.From = null;
                 this.To = this.Datas[current.From.Row * 9 + current.From.Column];
 
-                this.ReturnDataToJieQi(this.Datas[current.To.Row * 9 + current.To.Column]);
+                this.TryReturnDataToJieQi(current);
 
-                current.Dispose();
+                current.Disposer?.Dispose();
 
                 WpfAtomUtils.InvokeAtOnce(() =>
                 {
@@ -299,7 +303,7 @@ internal abstract class GameViewModelBase<T> : NotifyBase,
         }
     }
 
-    protected virtual void ReturnDataToJieQi(T chess) { }
+    protected virtual void TryReturnDataToJieQi(IChinChessCommand moveCommand) { }
 
     public ICommand RePlayCommand { get; private set; }
 
@@ -323,7 +327,7 @@ internal abstract class GameViewModelBase<T> : NotifyBase,
 
         foreach (var item in this.CommandStack)
         {
-            item.Dispose();
+            item.Destory();
         }
         this.CommandStack.Clear();
         this.CommandStack = null;
@@ -405,6 +409,11 @@ internal abstract class GameViewModelBase<T> : NotifyBase,
     public void OnNavigatedTo(NavigationContext navigationContext)
     {
         navigationContext.Parameters.Add("Title", this.Title);
+
+        if (navigationContext.Parameters.ContainsKey("NeedWarn"))
+        {
+            this._needWarn = (bool)navigationContext.Parameters["NeedWarn"];
+        }
     }
     #endregion
 

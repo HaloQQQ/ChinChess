@@ -1,7 +1,7 @@
 ﻿using ChinChessClient.Commands;
+using ChinChessClient.Contracts;
 using ChinChessClient.Models;
 using ChinChessCore.Models;
-using IceTea.Atom.Extensions;
 using IceTea.Pure.Contracts;
 using IceTea.Pure.Extensions;
 using IceTea.Pure.Utils;
@@ -25,7 +25,7 @@ internal class OnlineJieQiViewModel : OnlineChinChessViewModelBase
     {
         _signalr.On<IEnumerable<ChessType>>("ReceiveJieQi", seq =>
         {
-            this.Log(this.Name, "收到揭棋序列", this.IsRedRole == false);
+            this.Log(this.Name, $"收到揭棋序列{string.Join(',',seq)}", this.IsRedRole == false);
 
             _black = seq.Take(15).Select(t => Get(t, false)).ToList();
             _red = seq.Skip(15).Select(t => Get(t, true)).ToList();
@@ -61,77 +61,7 @@ internal class OnlineJieQiViewModel : OnlineChinChessViewModelBase
         .ObservesProperty(() => this.CommandStack.Count);
 
         this.SelectOrPutCommand = new DelegateCommand<ChinChessModel>(
-            model =>
-            {
-                if (!this.SelectOrPutCommand_ExecuteCore(model))
-                {
-                    return;
-                }
-
-                var targetIsEmpty = model.Data.IsEmpty;
-                // 选中
-                bool canSelect = !model.Data.IsEmpty && model.Data.IsRed == this.IsRedTurn;
-                if (canSelect)
-                {
-                    if (model.TrySelect(_preMoveVisitor))
-                    {
-                        CurrentChess = model;
-
-                        this.Select_Mp3();
-
-                        if (this.IsTurnToDo)
-                        {
-                            this.Log(this.Name, $"选中{new Position(model.Row, model.Column)}", this.IsRedRole == true);
-
-                            _signalr.InvokeAsync("Move", new ChessInfo
-                            {
-                                FromRed = this.IsRedRole == true,
-                                From = new Position(CurrentChess.Row, CurrentChess.Column),
-                                To = new Position(model.Row, model.Column),
-                            }.SerializeObject());
-                        }
-                    }
-
-                    return;
-                }
-
-                // 移动棋子到这里 或 吃子
-                if (this.CurrentChess.IsNotNullAnd(c => this.TryPutTo(c, new Position(model.Row, model.Column)))
-                )
-                {
-                    if (this.IsTurnToDo)
-                    {
-                        var action = targetIsEmpty ? "移动" : "吃子";
-                        this.Log(this.Name, $"{action}{new Position(this.CurrentChess.Row, this.CurrentChess.Column)}=>{new Position(model.Row, model.Column)}", this.IsRedRole == true);
-
-                        _signalr.InvokeAsync("Move", new ChessInfo
-                        {
-                            FromRed = this.IsRedRole == true,
-                            From = new Position(CurrentChess.Row, CurrentChess.Column),
-                            To = new Position(model.Row, model.Column)
-                        }.SerializeObject());
-                    }
-
-                    if (targetIsEmpty)
-                    {
-                        this.Go_Mp3();
-                    }
-                    else
-                    {
-                        this.Eat_Mp3();
-                    }
-
-                    this.From = this.CurrentChess;
-                    this.To = model;
-
-                    this.CurrentChess = null;
-
-                    if (!this.CheckGameOver())
-                    {
-                        this.IsRedTurn = !IsRedTurn;
-                    }
-                }
-            },
+            SelectOrPut_CommandExecute,
             model => this.IsTurnToDo && model != null && CurrentChess != model
         )
         .ObservesProperty(() => this.Status)
@@ -155,38 +85,107 @@ internal class OnlineJieQiViewModel : OnlineChinChessViewModelBase
         base.Timer_Tick(sender, e);
     }
 
+    protected override bool PushDead(InnerChinChess chess)
+    {
+        if (chess.IsEmpty)
+        {
+            return false;
+        }
+
+        if (chess.IsBack && chess.IsRed != this.IsRedRole)
+        {
+            if (chess.IsRed == true)
+            {
+                chess = _red.Last();
+
+                _red.Remove(chess);
+            }
+            else
+            {
+                chess = _black.Last();
+
+                _black.Remove(chess);
+            }
+
+            chess.HasNotUsed = true;
+        }
+
+        base.PushDead(chess);
+
+        return true;
+    }
+
+    protected override bool ReturnDead(InnerChinChess chess)
+    {
+        if (chess.IsEmpty)
+        {
+            return false;
+        }
+
+        if (chess.IsBack)
+        {
+            if (chess.IsRed == true)
+            {
+                chess = this.RedDeads.Last();
+
+                _red.Add(chess);
+            }
+            else
+            {
+                chess = this.BlackDeads.Last();
+
+                _black.Add(chess);
+            }
+
+            chess.HasNotUsed = false;
+        }
+
+        base.ReturnDead(chess);
+
+        return true;
+    }
+
     #region 揭棋数据
     private IList<InnerChinChess> _black;
     private IList<InnerChinChess> _red;
 
-    protected override void ReturnDataToJieQi(ChinChessModel chess)
+    protected override void TryReturnDataToJieQi(IChinChessCommand moveCommand)
     {
-        base.ReturnDataToJieQi(chess);
+        base.TryReturnDataToJieQi(moveCommand);
 
-        if (chess.Data.IsRed == true)
+        var data = this.Datas[moveCommand.To.Row * 9 + moveCommand.To.Column].Data;
+
+        bool hasReturnToOrigin = data.IsJieQi && data.OriginPos == moveCommand.From;
+
+        if (hasReturnToOrigin)
         {
-            _red.Add(chess.Data);
-        }
-        else
-        {
-            _black.Add(chess.Data);
+            if (data.IsRed == true)
+            {
+                _red.Add(data);
+            }
+            else
+            {
+                _black.Add(data);
+            }
         }
     }
 
     public InnerChinChess GetNewChess(bool isRed)
     {
-        AppUtils.Assert(_red.Count > 0 && _black.Count > 0, "没数据了");
-
         InnerChinChess? chess = default;
 
         if (isRed)
         {
+            AppUtils.Assert(_red.Count > 0, "红方没数据了");
+
             chess = _red.Last();
 
             _red.Remove(chess);
         }
         else
         {
+            AppUtils.Assert(_black.Count > 0, "黑方没数据了");
+
             chess = _black.Last();
 
             _black.Remove(chess);
@@ -219,31 +218,31 @@ internal class OnlineJieQiViewModel : OnlineChinChessViewModelBase
     }
     #endregion
 
-    public override bool TryPutTo(ChinChessModel chess, Position to)
+    protected override void OnGameStatusChanged(GameStatus newStatus)
     {
-        if (this.TryPutToCore(chess, to))
+        base.OnGameStatusChanged(newStatus);
+
+        switch (newStatus)
         {
-            if (chess.Data.IsBack == true)
-            {
-                chess.FlipChess(this.GetNewChess(chess.Row > 4));
-            }
+            case GameStatus.Stoped:
+                foreach (var item in this.Datas.Where(d => d.Data.IsBack))
+                {
+                    item.Data.HasNotUsed = true;
 
-            var command = new MoveCommand(
-                                    CommandStack.Count + 1,
-                                    chess.Data.IsRed == true,
-                                    chess, _canEatVisitor.GetChess(to.Row, to.Column)
-                                )
-                            .Execute();
-
-            WpfAtomUtils.BeginInvoke(() =>
-            {
-                CommandStack.Insert(0, command);
-            });
-
-            return true;
+                    item.FlipChess(this.GetNewChess(item.Data.IsRed == true));
+                }
+                break;
+            default:
+                break;
         }
+    }
 
-        return false;
+    protected override void PreMove(ChinChessModel chess)
+    {
+        if (chess.Data.IsBack == true)
+        {
+            chess.FlipChess(this.GetNewChess(chess.Row > 4));
+        }
     }
 
     protected override void DisposeCore()

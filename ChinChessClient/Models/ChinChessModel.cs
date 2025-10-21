@@ -34,18 +34,28 @@ internal class ChinChessModel : NotifyBase, IChineseChess
         internal set => SetProperty(ref _data, value.AssertArgumentNotNull(nameof(Data)));
     }
 
-    private InnerChinChess _fakeChess;
-    public InnerChinChess FakeChess => _fakeChess;
+    /// <summary>
+    /// 揭棋专用
+    /// </summary>
+    private InnerChinChess _originData;
+    public InnerChinChess OriginData => _originData;
 
-    public void FlipChess(InnerChinChess realChess)
+    /// <summary>
+    /// 揭棋翻开
+    /// </summary>
+    public void FlipChess(InnerChinChess realData)
     {
-        _fakeChess = this.Data;
+        _originData = this.Data;
 
-        this.Data = realChess.AssertArgumentNotNull(nameof(realChess));
+        this.Data = realData.AssertArgumentNotNull(nameof(realData));
 
-        realChess.OriginPos = this.Pos;
+        realData.OriginPos = this.Pos;
     }
 
+    /// <summary>
+    /// 试走棋
+    /// </summary>
+    /// <param name="newData"></param>
     public void SetDataWithoutNotify(InnerChinChess newData) => this._data = newData.AssertArgumentNotNull(nameof(newData));
 
     private bool _isDangerous;
@@ -63,8 +73,8 @@ internal class ChinChessModel : NotifyBase, IChineseChess
     }
 
     #region IChineseChess
-    public bool TrySelect(IVisitor preMoveVisitor)
-        => this.Data.PreMove(preMoveVisitor, new Position(this.Row, this.Column));
+    public bool TrySelect(IPreMoveVisitor preMoveVisitor)
+        => this.Data.PreMove(preMoveVisitor, this.Pos);
     #endregion
 
     protected override void DisposeCore()
@@ -106,7 +116,7 @@ internal class ChinChessModel : NotifyBase, IChineseChess
             }
             else if (column == 4)
             {
-                _data = new ChinChessShuai(isRed);
+                _data = new ChinChessShuai(isRed, isJieQi);
                 return;
             }
         }

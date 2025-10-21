@@ -1,12 +1,15 @@
-﻿using ChinChessCore.Models;
+﻿using ChinChessClient.Contracts;
+using ChinChessCore.Models;
 
 namespace ChinChessClient.Commands;
 
-interface IChinChessCommand : IDisposable
+interface IChinChessCommand : IDestory
 {
-    public Position From { get; }
+    Position From { get; }
 
-    public Position To { get; }
+    Position To { get; }
 
-    IChinChessCommand Execute();
+    IDisposable Execute();
+
+    IDisposable Disposer { get; }
 }

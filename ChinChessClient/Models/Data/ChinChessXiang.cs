@@ -13,7 +13,7 @@ internal class ChinChessXiang : InnerChinChess
     public override bool Accept(IVisitor visitor, Position from, Position to)
         => visitor.Visit(this, from, to);
 
-    public override bool CanLeave(IVisitor canEatVisitor, Position from, bool _ = true)
+    public override bool CanLeave(ICanPutToVisitor canPutToVisitor, Position from, bool _ = true)
     {
         foreach (var item in new[] {
                                     new Position(from.Row - 2, from.Column - 2),
@@ -22,7 +22,7 @@ internal class ChinChessXiang : InnerChinChess
                                     new Position(from.Row + 2, from.Column - 2)
                                 })
         {
-            if (this.CanPutTo(canEatVisitor, from, item))
+            if (this.CanPutTo(canPutToVisitor, from, item))
             {
                 return true;
             }

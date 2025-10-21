@@ -10,8 +10,8 @@ using System.Diagnostics;
 #pragma warning disable CS8629 // 可为 null 的值类型可为 null。
 namespace ChinChessClient.Models;
 
-[DebuggerDisplay("IsRed={IsRed}, Type={Type}")]
-internal class InnerChinChess : CloneableBase
+[DebuggerDisplay("{ToolTip}")]
+internal class InnerChinChess : NotifyBase
 {
     public static InnerChinChess Empty = new();
 
@@ -37,23 +37,38 @@ internal class InnerChinChess : CloneableBase
     private Position _originPos = new Position(-1, -1);
     internal Position OriginPos
     {
-        get => _originPos; 
+        get => _originPos;
         set => _originPos = value;
     }
 
-    #region IChineseChess
-    public bool CanPutTo(IVisitor canEatVisitor, Position from, Position to)
-        => this.Accept(canEatVisitor, from, to);
+    private bool _hasNotUsed;
+    public bool HasNotUsed
+    {
+        get => _hasNotUsed;
+        set => SetProperty<bool>(ref _hasNotUsed, value);
+    }
 
-    public bool PreMove(IVisitor preMoveVisitor, Position from)
+    #region IChineseChess
+    public bool CanPutTo(ICanPutToVisitor canPutToVisitor, Position from, Position to)
+        => this.Accept(canPutToVisitor, from, to);
+
+    public bool PreMove(IPreMoveVisitor preMoveVisitor, Position from)
         => this.Accept(preMoveVisitor, from, default);
 
-    public bool CanBeProtected(IVisitor notFatalVisitor, Position killer, Position to)
-        => this.Accept(notFatalVisitor, killer, to);
+    /// <summary>
+    /// 1、威胁可被击杀
+    /// 2、替死
+    /// </summary>
+    /// <param name="guardVisitor"></param>
+    /// <param name="killerPos"></param>
+    /// <param name="to"></param>
+    /// <returns></returns>
+    public bool CanBeProtected(IGuardVisitor guardVisitor, Position killerPos, Position to)
+        => this.Accept(guardVisitor, killerPos, to);
 
-    public bool IsDangerous(IVisitor canEatVisitor, Position current, out ChinChessModel killer)
+    public bool IsDangerous(ICanPutToVisitor canPutToVisitor, Position selfPos, out ChinChessModel killer)
     {
-        int toRow = current.Row, toColumn = current.Column;
+        int toRow = selfPos.Row, toColumn = selfPos.Column;
 
         #region 兵
         foreach (var item in new[] {
@@ -63,9 +78,9 @@ internal class InnerChinChess : CloneableBase
                                 new Position(toRow, toColumn + 1)
                             })
         {
-            if (CanEnemyTo(canEatVisitor, item, current, ChessType.兵))
+            if (TryPutToIfIsEnemy(canPutToVisitor, item, selfPos, ChessType.兵))
             {
-                killer = canEatVisitor.GetChess(item.Row, item.Column);
+                killer = canPutToVisitor.GetChess(item.Row, item.Column);
 
                 return true;
             }
@@ -84,9 +99,9 @@ internal class InnerChinChess : CloneableBase
                                 new Position(toRow + 1, toColumn + 2)
                             })
         {
-            if (CanEnemyTo(canEatVisitor, item, current, ChessType.馬))
+            if (TryPutToIfIsEnemy(canPutToVisitor, item, selfPos, ChessType.馬))
             {
-                killer = canEatVisitor.GetChess(item.Row, item.Column);
+                killer = canPutToVisitor.GetChess(item.Row, item.Column);
 
                 return true;
             }
@@ -102,9 +117,9 @@ internal class InnerChinChess : CloneableBase
                                 }
                 )
         {
-            if (FindJu(canEatVisitor, toRow, toColumn, rowStep, columnStep, out Position pos))
+            if (FindJu(canPutToVisitor, toRow, toColumn, rowStep, columnStep, out Position pos))
             {
-                killer = canEatVisitor.GetChess(pos.Row, pos.Column);
+                killer = canPutToVisitor.GetChess(pos.Row, pos.Column);
 
                 return true;
             }
@@ -147,9 +162,9 @@ internal class InnerChinChess : CloneableBase
                                 }
                 )
         {
-            if (FindPao(canEatVisitor, toRow, toColumn, rowStep, columnStep, out Position pos))
+            if (FindPao(canPutToVisitor, toRow, toColumn, rowStep, columnStep, out Position pos))
             {
-                killer = canEatVisitor.GetChess(pos.Row, pos.Column);
+                killer = canPutToVisitor.GetChess(pos.Row, pos.Column);
 
                 return true;
             }
@@ -198,9 +213,9 @@ internal class InnerChinChess : CloneableBase
                                 new Position(toRow + 2, toColumn + 2)
                             })
         {
-            if (CanEnemyTo(canEatVisitor, item, current, ChessType.相))
+            if (TryPutToIfIsEnemy(canPutToVisitor, item, selfPos, ChessType.相))
             {
-                killer = canEatVisitor.GetChess(item.Row, item.Column);
+                killer = canPutToVisitor.GetChess(item.Row, item.Column);
 
                 return true;
             }
@@ -215,9 +230,9 @@ internal class InnerChinChess : CloneableBase
                                 new Position(toRow + 1, toColumn + 1)
                             })
         {
-            if (CanEnemyTo(canEatVisitor, item, current, ChessType.仕))
+            if (TryPutToIfIsEnemy(canPutToVisitor, item, selfPos, ChessType.仕))
             {
-                killer = canEatVisitor.GetChess(item.Row, item.Column);
+                killer = canPutToVisitor.GetChess(item.Row, item.Column);
 
                 return true;
             }
@@ -232,9 +247,9 @@ internal class InnerChinChess : CloneableBase
                                 new Position(toRow + 1, toColumn)
                             })
         {
-            if (CanEnemyTo(canEatVisitor, item, current, ChessType.帥))
+            if (TryPutToIfIsEnemy(canPutToVisitor, item, selfPos, ChessType.帥))
             {
-                killer = canEatVisitor.GetChess(item.Row, item.Column);
+                killer = canPutToVisitor.GetChess(item.Row, item.Column);
 
                 return true;
             }
@@ -247,57 +262,24 @@ internal class InnerChinChess : CloneableBase
     }
     #endregion
 
-    public bool FaceToFace(IVisitor visitor)
-    {
-        var shuais = visitor.GetChesses()
-                .Where(c => c.Data.Type == ChessType.帥);
-
-        var redShuai = shuais.First(c => c.Data.IsRed == true);
-        var blackShuai = shuais.First(c => c.Data.IsRed == false);
-
-        // 王见王
-        if (redShuai.Column == blackShuai.Column)
-        {
-            int fromRow = Math.Min(redShuai.Row, blackShuai.Row);
-            int toRow = Math.Max(redShuai.Row, blackShuai.Row);
-
-            var currentRow = fromRow + 1;
-            while (currentRow < toRow)
-            {
-                var currentData = visitor.GetChessData(currentRow, blackShuai.Column);
-
-                if (!currentData.IsEmpty)
-                {
-                    return false;
-                }
-
-                currentRow++;
-            }
-
-            return true;
-        }
-
-        return false;
-    }
-
-    public virtual bool CanLeave(IVisitor canEatVisitor, Position from, bool isHorizontal = true)
+    public virtual bool CanLeave(ICanPutToVisitor canPutToVisitor, Position from, bool isHorizontal = true)
         => throw new NotImplementedException();
 
     /// <summary>
-    /// 起点位置是否为敌方<see cref="chessType"/>, 并且可以放置到目标点
+    /// chessType是否为敌方<see cref="chessType"/>, 并且可以from=>to
     /// </summary>
-    /// <param name="canEatVisitor"></param>
+    /// <param name="canPutToVisitor"></param>
     /// <param name="from"></param>
     /// <param name="to"></param>
     /// <param name="chessType"></param>
     /// <returns></returns>
-    public bool CanEnemyTo(IVisitor canEatVisitor, Position from, Position to, ChessType chessType)
+    public bool TryPutToIfIsEnemy(ICanPutToVisitor canPutToVisitor, Position from, Position to, ChessType chessType)
     {
-        if (IsEnemy(canEatVisitor, from, chessType))
+        if (IsEnemy(canPutToVisitor, from, chessType))
         {
-            var data = canEatVisitor.GetChessData(from.Row, from.Column);
+            var data = canPutToVisitor.GetChessData(from.Row, from.Column);
 
-            if (data.CanPutTo(canEatVisitor, from, to))
+            if (data.CanPutTo(canPutToVisitor, from, to))
             {
                 return true;
             }
@@ -328,14 +310,10 @@ internal class InnerChinChess : CloneableBase
     /// <summary>
     /// 是否为敌军
     /// </summary>
-    /// <param name="chinChess"></param>
+    /// <param name="target"></param>
     /// <returns></returns>
-    public bool IsEnemy(InnerChinChess chinChess)
-    {
-        //AppUtils.AssertOperationValidation(!this.IsEmpty, "非法操作");
-
-        return !chinChess.IsEmpty && this.IsRed != chinChess.IsRed;
-    }
+    public bool IsEnemy(InnerChinChess target)
+        => !target.IsEmpty && this.IsRed != target.IsRed;
 
     public bool IsPosValid(Position pos)
         => this.IsPosValid_Abs((ChessType)this.Type, pos, false);
@@ -476,4 +454,9 @@ internal class InnerChinChess : CloneableBase
     }
 
     public virtual bool Accept(IVisitor visitor, Position from, Position to) => throw new NotImplementedException();
+
+    public string ToolTip => this.ToString();
+
+    public override string ToString()
+        => $"IsRed={IsRed}, Type={Type}, IsBack={IsBack}, IsJieQi={IsJieQi}, HasNotUsed={HasNotUsed}";
 }

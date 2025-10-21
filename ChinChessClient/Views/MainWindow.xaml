@@ -8,7 +8,26 @@
     MinWidth="1200"
     MinHeight="640"
     prism:ViewModelLocator.AutoWireViewModel="True"
-    Style="{StaticResource Window_WithoutTitleBar_Animation}">
+    Style="{StaticResource Window_WithoutTitleBar_ScaleUp}">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/IceTea.Wpf.Core;component/DataTemplates/HotKeyDataTemplate.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style
+                x:Key="CheckBoxForMainPage"
+                BasedOn="{StaticResource CheckBox_Switch}"
+                TargetType="CheckBox">
+                <Setter Property="Visibility" Value="Collapsed" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding DataContext.Title, RelativeSource={RelativeSource AncestorType=TabControl}}" Value="主界面">
+                        <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
 
     <DockPanel>
         <WindowTitleBar DockPanel.Dock="Top">
@@ -33,8 +52,7 @@
                         Placement="Center"
                         PlacementTarget="{Binding RelativeSource={RelativeSource AncestorType=Window}}">
                         <Border
-                            Width="600"
-                            Height="400"
+                            Height="500"
                             Padding="0,10"
                             Background="{StaticResource PopupBackground}"
                             CornerRadius="20">
@@ -82,6 +100,18 @@
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
                                     </ListBox>
+                                </TabItem>
+
+                                <TabItem Header="应用快捷键">
+                                    <ListBox ItemContainerStyle="{StaticResource ListBoxItem_General}" ItemsSource="{Binding DataContext.AppConfigFileHotKeyManager, RelativeSource={RelativeSource AncestorType=TabControl}}" />
+                                </TabItem>
+
+                                <TabItem Header="设置">
+                                    <CheckBox
+                                        HorizontalContentAlignment="Left"
+                                        Content="开启吃子警告："
+                                        IsChecked="{Binding DataContext.NeedWarn, RelativeSource={RelativeSource AncestorType=TabControl}}"
+                                        Style="{StaticResource CheckBoxForMainPage}" />
                                 </TabItem>
                             </TabControl>
                         </Border>

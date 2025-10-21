@@ -6,7 +6,6 @@ using IceTea.Pure.Extensions;
 using IceTea.Pure.Utils;
 using IceTea.Wpf.Atom.Utils;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
-using Prism.Commands;
 
 #pragma warning disable IDE0290 // 使用主构造函数
 #pragma warning disable CS8625 // 无法将 null 字面量转换为非 null 的引用类型。
@@ -21,140 +20,109 @@ internal class OfflineJieQiViewModel : OfflineChinChessViewModelBase
 
     public OfflineJieQiViewModel(IAppConfigFileHotKeyManager appCfgHotKeyManager) : base(appCfgHotKeyManager)
     {
-        this.SelectOrPutCommand = new DelegateCommand<ChinChessModel>(
-            model =>
-            {
-                if (!this.SelectOrPutCommand_ExecuteCore(model))
-                {
-                    return;
-                }
+    }
 
-                var targetIsEmpty = model.Data.IsEmpty;
-                // 选中
-                bool canSelect = !model.Data.IsEmpty && model.Data.IsRed == this.IsRedTurn;
-                if (canSelect)
-                {
-                    if (model.TrySelect(_preMoveVisitor))
-                    {
-                        CurrentChess = model;
-
-                        this.Select_Mp3();
-
-                        this.Log(this.Name, $"选中{new Position(model.Row, model.Column)}", this.IsRedTurn == true);
-                    }
-
-                    return;
-                }
-
-                // 移动棋子到这里 或 吃子
-                if (this.CurrentChess.IsNotNullAnd(c => this.TryPutTo(c, new Position(model.Row, model.Column)))
-                )
-                {
-                    var action = targetIsEmpty ? "移动" : "吃子";
-                    this.Log(this.Name, $"{action}{new Position(this.CurrentChess.Row, this.CurrentChess.Column)}=>{new Position(model.Row, model.Column)}", this.IsRedTurn == true);
-
-                    if (targetIsEmpty)
-                    {
-                        this.Go_Mp3();
-                    }
-                    else
-                    {
-                        this.Eat_Mp3();
-                    }
-
-                    this.From = this.CurrentChess;
-                    this.To = model;
-
-                    this.CurrentChess = null;
-
-                    if (!this.CheckGameOver())
-                    {
-                        this.IsRedTurn = !IsRedTurn;
-                    }
-                }
-            },
-            model => this.Status == GameStatus.Ready && model != null && CurrentChess != model
-        )
-        .ObservesProperty(() => this.Status)
-        .ObservesProperty(() => this.IsRedTurn)
-        .ObservesProperty(() => this.CurrentChess);
-
-        _black = GetRandSeq(false);
-        _red = GetRandSeq(true);
-
-        IList<InnerChinChess> GetRandSeq(bool isRed)
+    protected override bool PushDead(InnerChinChess chess)
+    {
+        if (chess.IsEmpty)
         {
-            var seqs = new List<InnerChinChess>();
+            return false;
+        }
 
-            var indexs = new List<ChessType>() { ChessType.兵, ChessType.炮, ChessType.車, ChessType.兵, ChessType.馬, ChessType.相, ChessType.兵, ChessType.仕, ChessType.炮, ChessType.兵, ChessType.車, ChessType.馬, ChessType.兵, ChessType.相, ChessType.仕 };
-            var random = new Random();
-            for (int i = 0; i < 15; i++)
+        if (chess.IsBack)
+        {
+            if (chess.IsRed == true)
             {
-                var index = random.Next(0, indexs.Count);
+                chess = _red.Last();
 
-                switch (indexs[index])
-                {
-                    case ChessType.兵:
-                        seqs.Add(new ChinChessBing(isRed, isJieQi: true, isBack: false));
-                        break;
-                    case ChessType.炮:
-                        seqs.Add(new ChinChessPao(isRed, isJieQi: true, isBack: false));
-                        break;
-                    case ChessType.車:
-                        seqs.Add(new ChinChessJu(isRed, isJieQi: true, isBack: false));
-                        break;
-                    case ChessType.馬:
-                        seqs.Add(new ChinChessMa(isRed, isJieQi: true, isBack: false));
-                        break;
-                    case ChessType.相:
-                        seqs.Add(new ChinChessXiang(isRed, isJieQi: true, isBack: false));
-                        break;
-                    case ChessType.仕:
-                        seqs.Add(new ChinChessShi(isRed, isJieQi: true, isBack: false));
-                        break;
-                    default:
-                        break;
-                }
+                _red.Remove(chess);
+            }
+            else
+            {
+                chess = _black.Last();
 
-                indexs.RemoveAt(index);
+                _black.Remove(chess);
             }
 
-            return seqs;
+            chess.HasNotUsed = true;
         }
+
+        base.PushDead(chess);
+
+        return true;
+    }
+
+    protected override bool ReturnDead(InnerChinChess chess)
+    {
+        if (chess.IsEmpty)
+        {
+            return false;
+        }
+
+        if (chess.IsBack)
+        {
+            if (chess.IsRed == true)
+            {
+                chess = this.RedDeads.Last();
+
+                _red.Add(chess);
+            }
+            else
+            {
+                chess = this.BlackDeads.Last();
+
+                _black.Add(chess);
+            }
+
+            chess.HasNotUsed = false;
+        }
+
+        base.ReturnDead(chess);
+
+        return true;
     }
 
     #region 揭棋数据
     private IList<InnerChinChess> _black;
     private IList<InnerChinChess> _red;
 
-    protected override void ReturnDataToJieQi(ChinChessModel chess)
+    protected override void TryReturnDataToJieQi(IChinChessCommand moveCommand)
     {
-        base.ReturnDataToJieQi(chess);
+        base.TryReturnDataToJieQi(moveCommand);
 
-        if (chess.Data.IsRed == true)
+        var data = this.Datas[moveCommand.To.Row * 9 + moveCommand.To.Column].Data;
+
+        bool hasReturnToOrigin = data.IsJieQi && data.OriginPos == moveCommand.From;
+
+        if (hasReturnToOrigin)
         {
-            _red.Add(chess.Data);
-        }
-        else
-        {
-            _black.Add(chess.Data);
+            if (data.IsRed == true)
+            {
+                _red.Add(data);
+            }
+            else
+            {
+                _black.Add(data);
+            }
         }
     }
 
     public InnerChinChess GetNewChess(bool isRed)
     {
-        AppUtils.Assert(_red.Count > 0 && _black.Count > 0, "没数据了");
-
         InnerChinChess? chess = default;
 
         if (isRed)
         {
+            AppUtils.Assert(_red.Count > 0, "红方没数据了");
+
             chess = _red.Last();
 
             _red.Remove(chess);
         }
         else
         {
+            AppUtils.Assert(_black.Count > 0, "黑方没数据了");
+
             chess = _black.Last();
 
             _black.Remove(chess);
@@ -185,33 +153,83 @@ internal class OfflineJieQiViewModel : OfflineChinChessViewModelBase
             }
         });
     }
+
     #endregion
 
-    public override bool TryPutTo(ChinChessModel chess, Position to)
+    private void InitJieQiData()
     {
-        if (this.TryPutToCore(chess, to))
+        _black = GetRandSeq(false);
+        _red = GetRandSeq(true);
+
+        IList<InnerChinChess> GetRandSeq(bool isRed)
         {
-            if (chess.Data.IsBack == true)
+            var seq = new List<InnerChinChess>();
+
+            var indexs = new List<ChessType>() { ChessType.兵, ChessType.炮, ChessType.車, ChessType.兵, ChessType.馬, ChessType.相, ChessType.兵, ChessType.仕, ChessType.炮, ChessType.兵, ChessType.車, ChessType.馬, ChessType.兵, ChessType.相, ChessType.仕 };
+            var random = new Random();
+            for (int i = 0; i < 15; i++)
             {
-                chess.FlipChess(this.GetNewChess(chess.Row > 4));
+                var index = random.Next(0, indexs.Count);
+
+                switch (indexs[index])
+                {
+                    case ChessType.兵:
+                        seq.Add(new ChinChessBing(isRed, isJieQi: true, isBack: false));
+                        break;
+                    case ChessType.炮:
+                        seq.Add(new ChinChessPao(isRed, isJieQi: true, isBack: false));
+                        break;
+                    case ChessType.車:
+                        seq.Add(new ChinChessJu(isRed, isJieQi: true, isBack: false));
+                        break;
+                    case ChessType.馬:
+                        seq.Add(new ChinChessMa(isRed, isJieQi: true, isBack: false));
+                        break;
+                    case ChessType.相:
+                        seq.Add(new ChinChessXiang(isRed, isJieQi: true, isBack: false));
+                        break;
+                    case ChessType.仕:
+                        seq.Add(new ChinChessShi(isRed, isJieQi: true, isBack: false));
+                        break;
+                    default:
+                        break;
+                }
+
+                indexs.RemoveAt(index);
             }
 
-            var command = new MoveCommand(
-                                    CommandStack.Count + 1,
-                                    chess.Data.IsRed == true,
-                                    chess, _canEatVisitor.GetChess(to.Row, to.Column)
-                                )
-                            .Execute();
-
-            WpfAtomUtils.BeginInvoke(() =>
-            {
-                CommandStack.Insert(0, command);
-            });
-
-            return true;
+            return seq;
         }
+    }
 
-        return false;
+    protected override void OnGameStatusChanged(GameStatus newStatus)
+    {
+        base.OnGameStatusChanged(newStatus);
+
+        switch (newStatus)
+        {
+            case GameStatus.Ready:
+                this.InitJieQiData();
+                break;
+            case GameStatus.Stoped:
+                foreach (var item in this.Datas.Where(d => d.Data.IsBack))
+                {
+                    item.Data.HasNotUsed = true;
+
+                    item.FlipChess(this.GetNewChess(item.Data.IsRed == true));
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    protected override void PreMove(ChinChessModel chess)
+    {
+        if (chess.Data.IsBack == true)
+        {
+            chess.FlipChess(this.GetNewChess(chess.Row > 4));
+        }
     }
 
     protected override void DisposeCore()

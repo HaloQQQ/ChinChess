@@ -5,6 +5,8 @@ namespace ChinChessClient.Visitors;
 
 internal interface IVisitor : IDisposable
 {
+    bool FaceToFace();
+
     ChinChessModel GetChess(int row, int column);
 
     InnerChinChess GetChessData(int row, int column);
