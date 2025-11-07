@@ -30,7 +30,7 @@
 
         <KeyBinding
             Key="{Binding KeyGestureDic[模拟].SelectedKey}"
-            Command="{Binding MockCommand}"
+            Command="{Binding MockCommand, FallbackValue={x:Null}}"
             Modifiers="{Binding KeyGestureDic[模拟].ModifierKey}" />
 
         <KeyBinding
@@ -53,21 +53,22 @@
 
         <Border
             Grid.Column="0"
-            Margin="5,0,5,10"
+            Margin="5"
             Background="#88CCCCCC"
             CornerRadius="10">
             <ListBox
                 VerticalAlignment="Bottom"
                 HorizontalContentAlignment="Left"
+                FontSize="16"
                 ItemContainerStyle="{x:Null}"
                 ItemsSource="{Binding Records}"
+                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                 VirtualizingPanel.IsVirtualizing="True">
                 <ListBox.Resources>
                     <Style TargetType="TextBlock">
-                        <Setter Property="Margin" Value="10,5" />
                         <Setter Property="Foreground" Value="Black" />
 
-                        <Setter Property="FontSize" Value="16" />
+                        <Setter Property="TextWrapping" Value="Wrap" />
 
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsRed}" Value="True">
@@ -78,14 +79,12 @@
                 </ListBox.Resources>
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type models:Record}">
-                        <TextBlock Style="{StaticResource {x:Type TextBlock}}">
-                            <TextBlock TextWrapping="Wrap">
-                                <TextBlock Text="{Binding Id}" />
-                                )
-                                <TextBlock Text="{Binding Time, StringFormat='MM-dd HH:mm:ss'}" />
-                                <TextBlock Text="{Binding Name}" />
-                                <TextBlock Text="{Binding Action}" />
-                            </TextBlock>
+                        <TextBlock Margin="0,3" Style="{StaticResource {x:Type TextBlock}}">
+                            <TextBlock Text="{Binding Id}" />
+                            )
+                            <TextBlock Text="{Binding Time, StringFormat='MM-dd HH:mm:ss'}" />
+                            <TextBlock Text="{Binding Name}" />
+                            <TextBlock Style="{StaticResource {x:Type TextBlock}}" Text="{Binding Action}" />
                         </TextBlock>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
@@ -140,7 +139,7 @@
                                 MinHeight="100"
                                 Background="{StaticResource PopupBackground}"
                                 CornerRadius="10">
-                                <ListBox ItemTemplate="{StaticResource ChessDataTemplate}" ItemsSource="{Binding RedDeads}">
+                                <ListBox ItemTemplate="{StaticResource DeadChessDataTemplate}" ItemsSource="{Binding RedDeads}">
                                     <ListBox.ItemsPanel>
                                         <ItemsPanelTemplate>
                                             <WrapPanel Width="330" />
@@ -192,7 +191,7 @@
                                 MinHeight="100"
                                 Background="{StaticResource PopupBackground}"
                                 CornerRadius="10">
-                                <ListBox ItemTemplate="{StaticResource ChessDataTemplate}" ItemsSource="{Binding BlackDeads}">
+                                <ListBox ItemTemplate="{StaticResource DeadChessDataTemplate}" ItemsSource="{Binding BlackDeads}">
                                     <ListBox.ItemsPanel>
                                         <ItemsPanelTemplate>
                                             <WrapPanel Width="330" />
@@ -232,7 +231,7 @@
 
                         <Button Style="{StaticResource CancelLastButton}" />
 
-                        <Button IsEnabled="{Binding IsMock, Converter={StaticResource OppositeBoolConverter}}" Style="{StaticResource MockButton}" />
+                        <Button IsEnabled="{Binding IsMock, FallbackValue=True, Converter={StaticResource OppositeBoolConverter}}" Style="{StaticResource MockButton}" />
 
                         <Button Style="{StaticResource GiveUpButton}" />
 
@@ -240,20 +239,8 @@
                     </UniformGrid>
                 </DockPanel>
 
-                <Grid Margin="0,5,0,10">
-                    <Image>
-                        <Image.Style>
-                            <Style TargetType="Image">
-                                <Setter Property="Source" Value="../Resources/Pictures/棋盘（黑上）.png" />
-
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Angle}" Value="180">
-                                        <Setter Property="Source" Value="../Resources/Pictures/棋盘（红上）.png" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Image.Style>
-                    </Image>
+                <Grid Margin="0,12,0,0">
+                    <Image Style="{StaticResource Image_ChessBack}" />
 
                     <Grid Background="#AA999999" Visibility="{Binding IsMock, Converter={StaticResource BoolToVisibleCollapsedConverter}, FallbackValue={x:Static Visibility.Collapsed}}" />
 
@@ -284,7 +271,7 @@
                         Padding="3"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Top"
-                        Command="{Binding MockCommand}"
+                        Command="{Binding MockCommand, FallbackValue={x:Null}}"
                         Style="{StaticResource Button_Icon_Close}"
                         Visibility="{Binding IsMock, Converter={StaticResource BoolToVisibleCollapsedConverter}, FallbackValue={x:Static Visibility.Collapsed}}" />
                 </Grid>
@@ -293,13 +280,14 @@
 
         <Border
             Grid.Column="2"
-            Margin="5,0,5,10"
+            Margin="5"
             Background="#88CCCCCC"
             CornerRadius="10">
             <ListBox
                 VerticalAlignment="Bottom"
                 ItemContainerStyle="{x:Null}"
-                ItemsSource="{Binding CommandStack}">
+                ItemsSource="{Binding CommandStack}"
+                ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <ListBox.Resources>
                     <Style TargetType="TextBlock">
                         <Setter Property="Margin" Value="10,5" />
@@ -317,20 +305,17 @@
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type chinesechess:MoveCommand}">
                         <TextBlock Style="{StaticResource {x:Type TextBlock}}">
-                            <TextBlock>
-                                [
-                                <TextBlock Text="{Binding Index}" />
-                                ]
-                                (
-                                <TextBlock Text="{Binding From.Row}" />
-                                ,
-                                <TextBlock Text="{Binding From.Column}" />
-                                ) => (
-                                <TextBlock Text="{Binding To.Row}" />
-                                ,
-                                <TextBlock Text="{Binding To.Column}" />
-                                )
-                            </TextBlock>
+                            <TextBlock Text="{Binding Index}" />
+                            ]
+                            (
+                            <TextBlock Text="{Binding From.Row}" />
+                            ,
+                            <TextBlock Text="{Binding From.Column}" />
+                            ) => (
+                            <TextBlock Text="{Binding To.Row}" />
+                            ,
+                            <TextBlock Text="{Binding To.Column}" />
+                            )
                         </TextBlock>
                     </DataTemplate>
                 </ListBox.ItemTemplate>

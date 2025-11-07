@@ -90,7 +90,9 @@ internal class OfflineJieQiViewModel : OfflineChinChessViewModelBase
     {
         base.TryReturnDataToJieQi(moveCommand);
 
-        var data = this.Datas[moveCommand.To.Row * 9 + moveCommand.To.Column].Data;
+        var dataIndex = moveCommand.To.Index;
+
+        var data = this.Datas[dataIndex].Data;
 
         bool hasReturnToOrigin = data.IsJieQi && data.OriginPos == moveCommand.From;
 

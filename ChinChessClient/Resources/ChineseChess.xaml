@@ -10,6 +10,386 @@
     <DigitToCornerRadiusConverter x:Key="DigitToCornerRadiusConverter" />
     <MultiConverter_IsObjectEquals x:Key="MultiConverter_IsObjectEquals" />
 
+    <MultiConverter_IsValueEquals x:Key="MultiConverter_IsValueEquals" />
+
+    <SolidColorBrush x:Key="OpacityMask_HasNotUsed" Color="#AAFFFFFF" />
+
+    <VisualBrush x:Key="BackChessBrush">
+        <VisualBrush.Visual>
+            <Grid>
+                <Ellipse Width="79" Height="79">
+                    <Ellipse.Fill>
+                        <RadialGradientBrush GradientOrigin="5,36" RadiusX="36" RadiusY="70">
+                            <GradientStop Offset="0.3" Color="#FFCF8D" />
+                            <GradientStop Offset="0.9" Color="#D09758" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                    <Ellipse.Effect>
+                        <BlurEffect Radius="3" />
+                    </Ellipse.Effect>
+                </Ellipse>
+
+                <Ellipse
+                    Width="66"
+                    Height="66"
+                    VerticalAlignment="Top"
+                    Stroke="#9D7C74"
+                    StrokeThickness="3" />
+            </Grid>
+        </VisualBrush.Visual>
+    </VisualBrush>
+
+    <Style x:Key="Image_ChessContent" TargetType="Image">
+        <Setter Property="Width" Value="80" />
+        <Setter Property="Height" Value="80" />
+
+        <Style.Triggers>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsRed}" Value="True" />
+                    <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.車}" />
+                </MultiDataTrigger.Conditions>
+
+                <Setter Property="Source" Value="/Resources/Pictures/红车.png" />
+            </MultiDataTrigger>
+
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsRed}" Value="True" />
+                    <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.馬}" />
+                </MultiDataTrigger.Conditions>
+
+                <Setter Property="Source" Value="/Resources/Pictures/红马.png" />
+            </MultiDataTrigger>
+
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsRed}" Value="True" />
+                    <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.相}" />
+                </MultiDataTrigger.Conditions>
+
+                <Setter Property="Source" Value="/Resources/Pictures/红相.png" />
+            </MultiDataTrigger>
+
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsRed}" Value="True" />
+                    <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.仕}" />
+                </MultiDataTrigger.Conditions>
+
+                <Setter Property="Source" Value="/Resources/Pictures/红仕.png" />
+            </MultiDataTrigger>
+
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsRed}" Value="True" />
+                    <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.帥}" />
+                </MultiDataTrigger.Conditions>
+
+                <Setter Property="Source" Value="/Resources/Pictures/红帅.png" />
+            </MultiDataTrigger>
+
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsRed}" Value="True" />
+                    <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.炮}" />
+                </MultiDataTrigger.Conditions>
+
+                <Setter Property="Source" Value="/Resources/Pictures/红炮.png" />
+            </MultiDataTrigger>
+
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsRed}" Value="True" />
+                    <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.兵}" />
+                </MultiDataTrigger.Conditions>
+
+                <Setter Property="Source" Value="/Resources/Pictures/红兵.png" />
+            </MultiDataTrigger>
+
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsRed}" Value="False" />
+                    <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.車}" />
+                </MultiDataTrigger.Conditions>
+
+                <Setter Property="Source" Value="/Resources/Pictures/黑车.png" />
+            </MultiDataTrigger>
+
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsRed}" Value="False" />
+                    <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.馬}" />
+                </MultiDataTrigger.Conditions>
+
+                <Setter Property="Source" Value="/Resources/Pictures/黑马.png" />
+            </MultiDataTrigger>
+
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsRed}" Value="False" />
+                    <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.相}" />
+                </MultiDataTrigger.Conditions>
+
+                <Setter Property="Source" Value="/Resources/Pictures/黑象.png" />
+            </MultiDataTrigger>
+
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsRed}" Value="False" />
+                    <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.仕}" />
+                </MultiDataTrigger.Conditions>
+
+                <Setter Property="Source" Value="/Resources/Pictures/黑士.png" />
+            </MultiDataTrigger>
+
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsRed}" Value="False" />
+                    <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.帥}" />
+                </MultiDataTrigger.Conditions>
+
+                <Setter Property="Source" Value="/Resources/Pictures/黑将.png" />
+            </MultiDataTrigger>
+
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsRed}" Value="False" />
+                    <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.炮}" />
+                </MultiDataTrigger.Conditions>
+
+                <Setter Property="Source" Value="/Resources/Pictures/黑炮.png" />
+            </MultiDataTrigger>
+
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsRed}" Value="False" />
+                    <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.兵}" />
+                </MultiDataTrigger.Conditions>
+
+                <Setter Property="Source" Value="/Resources/Pictures/黑卒.png" />
+            </MultiDataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <DataTemplate x:Key="ChessDataTemplateCore" DataType="{x:Type models:InnerChinChess}">
+        <Image Style="{StaticResource Image_ChessContent}" />
+    </DataTemplate>
+
+    <DataTemplate x:Key="DeadChessDataTemplate" DataType="{x:Type models:InnerChinChess}">
+        <Border Width="79" Height="79">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRed}" Value="True" />
+                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.車}" />
+                            </MultiDataTrigger.Conditions>
+
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <ImageBrush ImageSource="../Resources/Pictures/红车.png" />
+                                </Setter.Value>
+                            </Setter>
+                        </MultiDataTrigger>
+
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRed}" Value="True" />
+                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.馬}" />
+                            </MultiDataTrigger.Conditions>
+
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <ImageBrush ImageSource="../Resources/Pictures/红马.png" />
+                                </Setter.Value>
+                            </Setter>
+                        </MultiDataTrigger>
+
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRed}" Value="True" />
+                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.相}" />
+                            </MultiDataTrigger.Conditions>
+
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <ImageBrush ImageSource="../Resources/Pictures/红相.png" />
+                                </Setter.Value>
+                            </Setter>
+                        </MultiDataTrigger>
+
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRed}" Value="True" />
+                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.仕}" />
+                            </MultiDataTrigger.Conditions>
+
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <ImageBrush ImageSource="../Resources/Pictures/红仕.png" />
+                                </Setter.Value>
+                            </Setter>
+                        </MultiDataTrigger>
+
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRed}" Value="True" />
+                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.帥}" />
+                            </MultiDataTrigger.Conditions>
+
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <ImageBrush ImageSource="../Resources/Pictures/红帅.png" />
+                                </Setter.Value>
+                            </Setter>
+                        </MultiDataTrigger>
+
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRed}" Value="True" />
+                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.炮}" />
+                            </MultiDataTrigger.Conditions>
+
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <ImageBrush ImageSource="../Resources/Pictures/红炮.png" />
+                                </Setter.Value>
+                            </Setter>
+                        </MultiDataTrigger>
+
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRed}" Value="True" />
+                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.兵}" />
+                            </MultiDataTrigger.Conditions>
+
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <ImageBrush ImageSource="../Resources/Pictures/红兵.png" />
+                                </Setter.Value>
+                            </Setter>
+                        </MultiDataTrigger>
+
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRed}" Value="False" />
+                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.車}" />
+                            </MultiDataTrigger.Conditions>
+
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <ImageBrush ImageSource="../Resources/Pictures/黑车.png" />
+                                </Setter.Value>
+                            </Setter>
+                        </MultiDataTrigger>
+
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRed}" Value="False" />
+                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.馬}" />
+                            </MultiDataTrigger.Conditions>
+
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <ImageBrush ImageSource="../Resources/Pictures/黑马.png" />
+                                </Setter.Value>
+                            </Setter>
+                        </MultiDataTrigger>
+
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRed}" Value="False" />
+                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.相}" />
+                            </MultiDataTrigger.Conditions>
+
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <ImageBrush ImageSource="../Resources/Pictures/黑象.png" />
+                                </Setter.Value>
+                            </Setter>
+                        </MultiDataTrigger>
+
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRed}" Value="False" />
+                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.仕}" />
+                            </MultiDataTrigger.Conditions>
+
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <ImageBrush ImageSource="../Resources/Pictures/黑士.png" />
+                                </Setter.Value>
+                            </Setter>
+                        </MultiDataTrigger>
+
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRed}" Value="False" />
+                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.帥}" />
+                            </MultiDataTrigger.Conditions>
+
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <ImageBrush ImageSource="../Resources/Pictures/黑将.png" />
+                                </Setter.Value>
+                            </Setter>
+                        </MultiDataTrigger>
+
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRed}" Value="False" />
+                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.炮}" />
+                            </MultiDataTrigger.Conditions>
+
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <ImageBrush ImageSource="../Resources/Pictures/黑炮.png" />
+                                </Setter.Value>
+                            </Setter>
+                        </MultiDataTrigger>
+
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRed}" Value="False" />
+                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.兵}" />
+                            </MultiDataTrigger.Conditions>
+
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <ImageBrush ImageSource="../Resources/Pictures/黑卒.png" />
+                                </Setter.Value>
+                            </Setter>
+                        </MultiDataTrigger>
+
+                        <DataTrigger Binding="{Binding HasNotUsed}" Value="True">
+                            <Setter Property="OpacityMask" Value="{StaticResource OpacityMask_HasNotUsed}" />
+                        </DataTrigger>
+
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding HasNotUsed}" Value="True" />
+                                <Condition Value="True">
+                                    <Condition.Binding>
+                                        <MultiBinding Converter="{StaticResource MultiConverter_IsValueEquals}">
+                                            <MultiBinding.Bindings>
+                                                <Binding Path="IsRed" />
+                                                <Binding Path="DataContext.IsRedRole" RelativeSource="{RelativeSource AncestorType=ListBox}" />
+                                            </MultiBinding.Bindings>
+                                        </MultiBinding>
+                                    </Condition.Binding>
+                                </Condition>
+                            </MultiDataTrigger.Conditions>
+
+                            <Setter Property="Background" Value="{StaticResource BackChessBrush}" />
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+        </Border>
+    </DataTemplate>
+
     <DataTemplate x:Key="Chess" DataType="models:ChinChessModel">
         <Button
             HorizontalContentAlignment="Center"
@@ -25,8 +405,8 @@
             </Button.RenderTransform>
             <Button.Style>
                 <Style BasedOn="{StaticResource {x:Type ButtonBase}}" TargetType="Button">
-                    <Setter Property="Width" Value="72" />
-                    <Setter Property="Height" Value="72" />
+                    <Setter Property="Width" Value="75" />
+                    <Setter Property="Height" Value="75" />
 
                     <Setter Property="MyAttachProperty.CornerRadius" Value="{Binding Width, RelativeSource={RelativeSource Self}, Converter={StaticResource DigitToCornerRadiusConverter}}" />
 
@@ -384,34 +764,7 @@
                         </Trigger>
 
                         <DataTrigger Binding="{Binding Data.IsBack}" Value="True">
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <VisualBrush>
-                                        <VisualBrush.Visual>
-                                            <Grid>
-                                                <Ellipse Width="72" Height="72">
-                                                    <Ellipse.Fill>
-                                                        <RadialGradientBrush GradientOrigin="5,36" RadiusX="36" RadiusY="70">
-                                                            <GradientStop Offset="0.3" Color="#FFCF8D" />
-                                                            <GradientStop Offset="0.9" Color="#D09758" />
-                                                        </RadialGradientBrush>
-                                                    </Ellipse.Fill>
-                                                    <Ellipse.Effect>
-                                                        <BlurEffect Radius="3" />
-                                                    </Ellipse.Effect>
-                                                </Ellipse>
-
-                                                <Ellipse
-                                                    Width="60"
-                                                    Height="60"
-                                                    VerticalAlignment="Top"
-                                                    Stroke="#9D7C74"
-                                                    StrokeThickness="3" />
-                                            </Grid>
-                                        </VisualBrush.Visual>
-                                    </VisualBrush>
-                                </Setter.Value>
-                            </Setter>
+                            <Setter Property="Background" Value="{StaticResource BackChessBrush}" />
                         </DataTrigger>
 
                         <MultiDataTrigger>
@@ -455,250 +808,12 @@
                         </MultiDataTrigger>
 
                         <DataTrigger Binding="{Binding Data.HasNotUsed}" Value="True">
-                            <Setter Property="OpacityMask">
-                                <Setter.Value>
-                                    <SolidColorBrush Color="#AA00FF00" />
-                                </Setter.Value>
-                            </Setter>
+                            <Setter Property="OpacityMask" Value="{StaticResource OpacityMask_HasNotUsed}" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
             </Button.Style>
         </Button>
-    </DataTemplate>
-
-    <DataTemplate x:Key="ChessDataTemplate" DataType="{x:Type models:InnerChinChess}">
-        <Border
-            Width="79"
-            Height="79"
-            CornerRadius="15">
-            <Border.Style>
-                <Style TargetType="Border">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding HasNotUsed}" Value="True">
-                            <Setter Property="OpacityMask">
-                                <Setter.Value>
-                                    <SolidColorBrush Color="#AA00FF00" />
-                                </Setter.Value>
-                            </Setter>
-                        </DataTrigger>
-
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsRed}" Value="True" />
-                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.車}" />
-                            </MultiDataTrigger.Conditions>
-
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <ImageBrush ImageSource="../Resources/Pictures/红车.png" />
-                                </Setter.Value>
-                            </Setter>
-                        </MultiDataTrigger>
-
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsRed}" Value="True" />
-                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.馬}" />
-                            </MultiDataTrigger.Conditions>
-
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <ImageBrush ImageSource="../Resources/Pictures/红马.png" />
-                                </Setter.Value>
-                            </Setter>
-                        </MultiDataTrigger>
-
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsRed}" Value="True" />
-                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.相}" />
-                            </MultiDataTrigger.Conditions>
-
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <ImageBrush ImageSource="../Resources/Pictures/红相.png" />
-                                </Setter.Value>
-                            </Setter>
-                        </MultiDataTrigger>
-
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsRed}" Value="True" />
-                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.仕}" />
-                            </MultiDataTrigger.Conditions>
-
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <ImageBrush ImageSource="../Resources/Pictures/红仕.png" />
-                                </Setter.Value>
-                            </Setter>
-                        </MultiDataTrigger>
-
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsRed}" Value="True" />
-                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.帥}" />
-                            </MultiDataTrigger.Conditions>
-
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <ImageBrush ImageSource="../Resources/Pictures/红帅.png" />
-                                </Setter.Value>
-                            </Setter>
-                        </MultiDataTrigger>
-
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsRed}" Value="True" />
-                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.炮}" />
-                            </MultiDataTrigger.Conditions>
-
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <ImageBrush ImageSource="../Resources/Pictures/红炮.png" />
-                                </Setter.Value>
-                            </Setter>
-                        </MultiDataTrigger>
-
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsRed}" Value="True" />
-                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.兵}" />
-                            </MultiDataTrigger.Conditions>
-
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <ImageBrush ImageSource="../Resources/Pictures/红兵.png" />
-                                </Setter.Value>
-                            </Setter>
-                        </MultiDataTrigger>
-
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsRed}" Value="False" />
-                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.車}" />
-                            </MultiDataTrigger.Conditions>
-
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <ImageBrush ImageSource="../Resources/Pictures/黑车.png" />
-                                </Setter.Value>
-                            </Setter>
-                        </MultiDataTrigger>
-
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsRed}" Value="False" />
-                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.馬}" />
-                            </MultiDataTrigger.Conditions>
-
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <ImageBrush ImageSource="../Resources/Pictures/黑马.png" />
-                                </Setter.Value>
-                            </Setter>
-                        </MultiDataTrigger>
-
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsRed}" Value="False" />
-                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.相}" />
-                            </MultiDataTrigger.Conditions>
-
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <ImageBrush ImageSource="../Resources/Pictures/黑象.png" />
-                                </Setter.Value>
-                            </Setter>
-                        </MultiDataTrigger>
-
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsRed}" Value="False" />
-                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.仕}" />
-                            </MultiDataTrigger.Conditions>
-
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <ImageBrush ImageSource="../Resources/Pictures/黑士.png" />
-                                </Setter.Value>
-                            </Setter>
-                        </MultiDataTrigger>
-
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsRed}" Value="False" />
-                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.帥}" />
-                            </MultiDataTrigger.Conditions>
-
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <ImageBrush ImageSource="../Resources/Pictures/黑将.png" />
-                                </Setter.Value>
-                            </Setter>
-                        </MultiDataTrigger>
-
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsRed}" Value="False" />
-                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.炮}" />
-                            </MultiDataTrigger.Conditions>
-
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <ImageBrush ImageSource="../Resources/Pictures/黑炮.png" />
-                                </Setter.Value>
-                            </Setter>
-                        </MultiDataTrigger>
-
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsRed}" Value="False" />
-                                <Condition Binding="{Binding Type}" Value="{x:Static chessType:ChessType.兵}" />
-                            </MultiDataTrigger.Conditions>
-
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <ImageBrush ImageSource="../Resources/Pictures/黑卒.png" />
-                                </Setter.Value>
-                            </Setter>
-                        </MultiDataTrigger>
-
-                        <DataTrigger Binding="{Binding IsBack}" Value="True">
-                            <Setter Property="Background">
-                                <Setter.Value>
-                                    <VisualBrush>
-                                        <VisualBrush.Visual>
-                                            <Grid>
-                                                <Ellipse Width="79" Height="79">
-                                                    <Ellipse.Fill>
-                                                        <RadialGradientBrush GradientOrigin="5,36" RadiusX="36" RadiusY="70">
-                                                            <GradientStop Offset="0.3" Color="#FFCF8D" />
-                                                            <GradientStop Offset="0.9" Color="#D09758" />
-                                                        </RadialGradientBrush>
-                                                    </Ellipse.Fill>
-                                                    <Ellipse.Effect>
-                                                        <BlurEffect Radius="3" />
-                                                    </Ellipse.Effect>
-                                                </Ellipse>
-
-                                                <Ellipse
-                                                    Width="66"
-                                                    Height="66"
-                                                    VerticalAlignment="Top"
-                                                    Stroke="#9D7C74"
-                                                    StrokeThickness="3" />
-                                            </Grid>
-                                        </VisualBrush.Visual>
-                                    </VisualBrush>
-                                </Setter.Value>
-                            </Setter>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Border.Style>
-        </Border>
     </DataTemplate>
 
     <Style
@@ -725,10 +840,10 @@
         x:Key="MockButton"
         BasedOn="{StaticResource FunctionButton}"
         TargetType="Button">
-        <Setter Property="Command" Value="{Binding MockCommand}" />
+        <Setter Property="Command" Value="{Binding MockCommand, FallbackValue={x:Null}}" />
         <Setter Property="Content" Value="&#xe658;" />
 
-        <Setter Property="ToolTip" Value="{Binding KeyGestureDic[模拟].ToolTip}" />
+        <Setter Property="ToolTip" Value="{Binding KeyGestureDic[模拟].ToolTip, FallbackValue={x:Null}}" />
 
         <Style.Triggers>
             <DataTrigger Binding="{Binding IsMock}" Value="{x:Null}">
@@ -737,38 +852,21 @@
         </Style.Triggers>
     </Style>
 
-    <FontFamily x:Key="Iconfont">/Resources/#iconfont</FontFamily>
-    <Style
-        x:Key="GiveUpButton"
-        BasedOn="{StaticResource FunctionButton}"
-        TargetType="Button">
-        <Setter Property="FontFamily" Value="{StaticResource Iconfont}" />
-
-        <Setter Property="Command" Value="{Binding GiveUpCommand}" />
-        <Setter Property="Content" Value="&#xe60e;" />
-
-        <Setter Property="ToolTip" Value="{Binding KeyGestureDic[认输].ToolTip}" />
-    </Style>
-
-    <Style
-        x:Key="HeQiButton"
-        BasedOn="{StaticResource FunctionButton}"
-        TargetType="Button">
-        <Setter Property="FontFamily" Value="{StaticResource Iconfont}" />
-
-        <Setter Property="Command" Value="{Binding HeQiCommand}" />
-        <Setter Property="Content" Value="&#xe627;" />
-
-        <Setter Property="ToolTip" Value="{Binding KeyGestureDic[和棋].ToolTip}" />
-    </Style>
-
-
-
     <Style x:Key="Time_Txt" TargetType="TextBlock">
         <Setter Property="Foreground" Value="LightYellow" />
         <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="FontSize" Value="50" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="Image_ChessBack" TargetType="Image">
+        <Setter Property="Source" Value="Pictures/棋盘（黑上）.png" />
+
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Angle}" Value="180">
+                <Setter Property="Source" Value="Pictures/棋盘（红上）.png" />
+            </DataTrigger>
+        </Style.Triggers>
     </Style>
 </ResourceDictionary>

@@ -25,7 +25,7 @@ internal class OnlineJieQiViewModel : OnlineChinChessViewModelBase
     {
         _signalr.On<IEnumerable<ChessType>>("ReceiveJieQi", seq =>
         {
-            this.Log(this.Name, $"收到揭棋序列{string.Join(',',seq)}", this.IsRedRole == false);
+            this.Log(this.Name, "收到揭棋序列", this.IsRedRole == true);
 
             _black = seq.Take(15).Select(t => Get(t, false)).ToList();
             _red = seq.Skip(15).Select(t => Get(t, true)).ToList();
@@ -92,7 +92,7 @@ internal class OnlineJieQiViewModel : OnlineChinChessViewModelBase
             return false;
         }
 
-        if (chess.IsBack && chess.IsRed != this.IsRedRole)
+        if (chess.IsBack)
         {
             if (chess.IsRed == true)
             {
@@ -153,7 +153,9 @@ internal class OnlineJieQiViewModel : OnlineChinChessViewModelBase
     {
         base.TryReturnDataToJieQi(moveCommand);
 
-        var data = this.Datas[moveCommand.To.Row * 9 + moveCommand.To.Column].Data;
+        var dataIndex = moveCommand.To.Index;
+
+        var data = this.Datas[dataIndex].Data;
 
         bool hasReturnToOrigin = data.IsJieQi && data.OriginPos == moveCommand.From;
 

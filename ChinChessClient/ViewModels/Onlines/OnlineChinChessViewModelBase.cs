@@ -129,6 +129,10 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
 
         _signalr.On("RecvRevokeReq", () =>
         {
+            var tempStatus = this.Status;
+            this._status = GameStatus.NotReady;
+            RaisePropertyChanged(nameof(Status));
+
             var result = MessageBox.Show("对方请求悔棋，是否同意？", "悔棋", MessageBoxButton.YesNo);
 
             var allowRevoke = result == MessageBoxResult.Yes;
@@ -136,6 +140,9 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
 
             this.PublishMsg(msg);
             this.Log(this.Name, msg, this.IsRedRole == true);
+
+            this._status = tempStatus;
+            RaisePropertyChanged(nameof(Status));
 
             return allowRevoke;
         });
@@ -150,6 +157,10 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
 
         _signalr.On("RecvReplayReq", () =>
         {
+            var tempStatus = this.Status;
+            this._status = GameStatus.NotReady;
+            RaisePropertyChanged(nameof(Status));
+
             var result = MessageBox.Show("对方请求重玩，是否同意？", "重玩", MessageBoxButton.YesNo);
 
             var allowReplay = result == MessageBoxResult.Yes;
@@ -158,6 +169,11 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
             {
                 base.RePlay_CommandExecute();
                 _signalr.InvokeAsync("PushJieQiDataToClients");
+            }
+            else
+            {
+                this._status = tempStatus;
+                RaisePropertyChanged(nameof(Status));
             }
 
             var msg = "对方请求重玩，已" + (allowReplay ? "同意" : "拒绝");
@@ -434,6 +450,9 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
         if (!allowReplay)
         {
             this.Log(this.Name, "重玩请求被拒绝", this.IsRedRole == true);
+
+            this._status = tempStatus;
+            RaisePropertyChanged(nameof(Status));
         }
         else
         {
@@ -441,9 +460,6 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
 
             this.Log(this.Name, "重玩", this.IsRedRole == true);
         }
-
-        this._status = tempStatus;
-        RaisePropertyChanged(nameof(Status));
     }
     #endregion
 

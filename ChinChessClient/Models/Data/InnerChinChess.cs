@@ -320,7 +320,7 @@ internal class InnerChinChess : NotifyBase
 
     public bool IsPoseValid_Rel(ChessType chessType, Position pos, bool isEnemy = true)
     {
-        if (chessType != ChessType.帥 && this.IsJieQi)
+        if (chessType != ChessType.帥 && this.IsJieQi && !this.IsBack)
         {
             return pos.Row.IsInRange(0, 9) && pos.Column.IsInRange(0, 8);
         }
@@ -370,7 +370,7 @@ internal class InnerChinChess : NotifyBase
 
     public bool IsPosValid_Abs(ChessType chessType, Position pos, bool isEnemy = true)
     {
-        if (chessType != ChessType.帥 && this.IsJieQi)
+        if (chessType != ChessType.帥 && this.IsJieQi && !this.IsBack)
         {
             return pos.Row.IsInRange(0, 9) && pos.Column.IsInRange(0, 8);
         }

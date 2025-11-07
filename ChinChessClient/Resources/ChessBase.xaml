@@ -77,4 +77,28 @@
 
         <Setter Property="ToolTip" Value="{Binding KeyGestureDic[悔棋].ToolTip}" />
     </Style>
+
+    <Style
+        x:Key="GiveUpButton"
+        BasedOn="{StaticResource FunctionButton}"
+        TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource Iconfont}" />
+
+        <Setter Property="Command" Value="{Binding GiveUpCommand}" />
+        <Setter Property="Content" Value="&#xe60e;" />
+
+        <Setter Property="ToolTip" Value="{Binding KeyGestureDic[认输].ToolTip}" />
+    </Style>
+
+    <Style
+        x:Key="HeQiButton"
+        BasedOn="{StaticResource FunctionButton}"
+        TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource Iconfont}" />
+
+        <Setter Property="Command" Value="{Binding HeQiCommand}" />
+        <Setter Property="Content" Value="&#xe627;" />
+
+        <Setter Property="ToolTip" Value="{Binding KeyGestureDic[和棋].ToolTip}" />
+    </Style>
 </ResourceDictionary>

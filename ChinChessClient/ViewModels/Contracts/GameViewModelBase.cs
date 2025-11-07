@@ -45,7 +45,7 @@ internal abstract class GameViewModelBase<T> : NotifyBase,
 
         this.RePlayCommand = new DelegateCommand(
             RePlay_CommandExecute,
-            () => Status != GameStatus.NotInitialized)
+            () => Status != GameStatus.NotInitialized && Status != GameStatus.NotReady)
         .ObservesProperty(() => Status);
 
         this.SwitchDirectionCommand = new DelegateCommand(
@@ -283,7 +283,7 @@ internal abstract class GameViewModelBase<T> : NotifyBase,
             if (current != null)
             {
                 this.From = null;
-                this.To = this.Datas[current.From.Row * 9 + current.From.Column];
+                this.To = this.Datas[current.From.Index];
 
                 this.TryReturnDataToJieQi(current);
 

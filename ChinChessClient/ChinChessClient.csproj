@@ -9,16 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Resources\iconfont.ttf" />
-    <None Remove="Resources\Images\山水之间.jpeg" />
-    <None Remove="Resources\Images\暮山.jpeg" />
-    <None Remove="Resources\Images\木纹_浅色.jpeg" />
-    <None Remove="Resources\Images\木纹_深色.jpeg" />
-    <None Remove="Resources\Images\群山.jpeg" />
-    <None Remove="Resources\Medias\jiangjun.mp3" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="Resources\Medias\begin.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -46,7 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="IceTea.Wpf.Core" Version="1.2.8" />
+    <PackageReference Include="IceTea.Wpf.Core" Version="1.2.9" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.9" />
     <PackageReference Include="Prism.DryIoc" Version="8.1.97" />
   </ItemGroup>
@@ -84,9 +74,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="appsettings.yml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

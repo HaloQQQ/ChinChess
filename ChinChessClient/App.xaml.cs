@@ -29,7 +29,7 @@ public partial class App : PrismApplication
 
     protected override void RegisterTypes(IContainerRegistry containerRegistry)
     {
-        containerRegistry.RegisterSingleton<IConfigManager, WpfJsonConfigManager>();
+        containerRegistry.RegisterSingleton<IConfigManager, WpfYamlConfigManager>();
         containerRegistry.RegisterSingleton<IAppConfigFileHotKeyManager, AppConfigFileHotKeyManager>();
 
         containerRegistry.RegisterForNavigation<OnlineChinChessView>("Online");

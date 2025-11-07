@@ -13,6 +13,11 @@
         public int Row { get; }
         public int Column { get; }
 
+        /// <summary>
+        /// 根据坐标计算数据索引
+        /// </summary>
+        public int Index => Row * 9 + Column;
+
         public static bool operator ==(Position left, Position right)
             => left.Row == right.Row && left.Column == right.Column;
 

@@ -237,10 +237,7 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
                     }
                     else
                     {
-                        if (item.Data is ChinChessShuai)
-                        {
-                            this.JiangJun_Mp3();
-                        }
+                        this.JiangJun_Mp3();
                     }
                 }
             }
