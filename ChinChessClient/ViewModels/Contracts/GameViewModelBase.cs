@@ -276,6 +276,7 @@ internal abstract class GameViewModelBase<T> : NotifyBase,
     {
         TryRevoke();
         TryRevoke();
+        this.CurrentChess = null;
 
         bool TryRevoke()
         {

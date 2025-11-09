@@ -68,7 +68,7 @@ internal class GuardVisitor : VisitorBase, IGuardVisitor
     }
 
     /// <summary>
-    /// 垫車、炮
+    /// 从車、炮手中救人
     /// </summary>
     /// <param name="chess"></param>
     /// <param name="fromPos"></param>
@@ -591,6 +591,14 @@ internal class GuardVisitor : VisitorBase, IGuardVisitor
     {
         if (killer.IsDangerous(_canPutToVisitor, killerPos, out ChinChessModel guard))
         {
+            var guardIsShuai = guard.Data.Type == ChessType.帥;
+
+            // 帅后续可以自救，此处不需要尝试自保
+            if (guardIsShuai && victimPos == guard.Pos)
+            {
+                return false;
+            }
+
             using (new MockMoveCommand(
                             this.GetChess(guard.Pos.Row, guard.Pos.Column),
                             this.GetChess(killerPos.Row, killerPos.Column)
@@ -602,10 +610,20 @@ internal class GuardVisitor : VisitorBase, IGuardVisitor
                     return false;
                 }
 
-                if (!this.GetChessData(victimPos).IsDangerous(_canPutToVisitor, victimPos, out _))
+                if (guardIsShuai)
                 {
-                    return true;
+                    if (this.GetChessData(killerPos).IsDangerous(_canPutToVisitor, killerPos, out _))
+                    {
+                        return false;
+                    }
                 }
+
+                if (this.GetChessData(victimPos).IsDangerous(_canPutToVisitor, victimPos, out _))
+                {
+                    return false;
+                }
+
+                return true;
             }
         }
 

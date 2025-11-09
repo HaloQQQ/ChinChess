@@ -68,6 +68,13 @@ internal class InnerChinChess : NotifyBase
 
     public bool IsDangerous(ICanPutToVisitor canPutToVisitor, Position selfPos, out ChinChessModel killer)
     {
+        if (this.IsEmpty)
+        {
+            killer = default;
+
+            return false;
+        }
+
         int toRow = selfPos.Row, toColumn = selfPos.Column;
 
         #region 兵
