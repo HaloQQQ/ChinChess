@@ -5,7 +5,12 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>服务器.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="服务器.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Costura.Fody" Version="6.0.0">

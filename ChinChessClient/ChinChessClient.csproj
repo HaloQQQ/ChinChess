@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>中国象棋.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -33,6 +34,7 @@
     <Content Include="Resources\Medias\select.mp3">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="中国象棋.ico" />
   </ItemGroup>
 
   <ItemGroup>
