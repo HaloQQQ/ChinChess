@@ -1,6 +1,7 @@
 ﻿using ChinChessClient.ViewModels;
 using ChinChessClient.Views;
 using IceTea.Pure.Contracts;
+using IceTea.Pure.Extensions;
 using IceTea.Wpf.Atom.Utils;
 using IceTea.Wpf.Atom.Utils.Configs;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
@@ -9,8 +10,11 @@ using Prism.Ioc;
 using Prism.Mvvm;
 using Prism.Regions;
 using System.Windows;
+using System.Windows.Navigation;
 
+#pragma warning disable CS8600 // 将 null 字面量或可能为 null 的值转换为非 null 类型。
 #pragma warning disable CS8603 // 可能返回 null 引用。
+#pragma warning disable CS8604 // 引用类型参数可能为 null。
 namespace ChinChessClient;
 
 /// <summary>
@@ -47,5 +51,50 @@ public partial class App : PrismApplication
         regionManager.RegisterViewWithRegion<MainView>("ChinChessRegion");
 
         ViewModelLocationProvider.Register<MainWindow, MainViewModel>();
+    }
+
+    protected override void OnLoadCompleted(NavigationEventArgs e)
+    {
+        base.OnLoadCompleted(e);
+
+        App.Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+    }
+
+    private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        var list = this.GetMessageList(e.ExceptionObject as Exception);
+
+        var message = $"Domain出现异常:{AppStatics.NewLineChars}" + AppStatics.NewLineChars.Join(list);
+        MessageBox.Show(message);
+    }
+
+    private IEnumerable<string> GetMessageList(Exception exception)
+    {
+        var list = new List<string>
+            {
+                exception.Message
+            };
+
+        while ((exception = exception.InnerException) != null)
+        {
+            list.Add(exception.Message);
+
+            if (!exception.StackTrace.IsNullOrBlank())
+            {
+                list.Add(exception.StackTrace);
+            }
+        }
+
+        return list;
+    }
+
+    private void Current_DispatcherUnhandledException(object sender,
+        System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+    {
+        var list = this.GetMessageList(e.Exception);
+
+        var message = $"App出现异常:{AppStatics.NewLineChars}" + AppStatics.NewLineChars.Join(list);
+        MessageBox.Show(message);
     }
 }

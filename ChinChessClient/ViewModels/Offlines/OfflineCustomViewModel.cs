@@ -45,6 +45,15 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
                                     this.Status = GameStatus.Ready;
                                 })
                                 .ObservesProperty(() => IsCustomOver);
+
+        SelectOrPutCommand = new DelegateCommand<ChinChessModel>(
+            SelectOrPut_CommandExecute,
+            model => IsCustomOver && this.Status == GameStatus.Ready && model != null && CurrentChess != model
+        )
+        .ObservesProperty(() => this.Status)
+        .ObservesProperty(() => this.IsCustomOver)
+        .ObservesProperty(() => this.IsRedTurn)
+        .ObservesProperty(() => this.CurrentChess);
     }
 
     public void ReturnData(ChinChessModel chinChessModel)
