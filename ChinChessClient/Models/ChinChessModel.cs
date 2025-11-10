@@ -16,6 +16,15 @@ internal class ChinChessModel : NotifyBase, IChineseChess
     public int Row { get; }
     public int Column { get; }
 
+    public ChinChessModel(int row, int column)
+    {
+        this.Row = row;
+        this.Column = column;
+        this.Pos = new Position(this.Row, this.Column);
+
+        this.Data = InnerChinChess.Empty;
+    }
+
     public ChinChessModel(int row, int column, bool isJieQi)
     {
         this.InitData(row, column, isJieQi);

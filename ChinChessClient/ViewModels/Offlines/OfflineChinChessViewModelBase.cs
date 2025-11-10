@@ -11,10 +11,9 @@ internal abstract class OfflineChinChessViewModelBase : ChinChessViewModelBase
 {
     protected override string Name => this.IsRedTurn ? "红色" : "黑色";
 
-    public OfflineChinChessViewModelBase(IAppConfigFileHotKeyManager appCfgHotKeyManager) : base(appCfgHotKeyManager)
+    public OfflineChinChessViewModelBase(IAppConfigFileHotKeyManager appCfgHotKeyManager) 
+        : base(appCfgHotKeyManager)
     {
-        this.Status = GameStatus.Ready;
-
         this.InitDatas();
 
         this.Begin_Wav();

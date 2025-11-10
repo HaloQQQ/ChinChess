@@ -55,7 +55,7 @@ internal class MainViewModel : NotifyBase, INavigationAware
 
             if (fileDialog != null)
             {
-                this.BackImage = new ImageRecord() { Uri = fileDialog.FileName };
+                this.BackImage = new ImageRecord(fileDialog.FileName);
             }
         });
 

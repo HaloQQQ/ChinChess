@@ -38,5 +38,10 @@
             Command="{Binding NavigateToCommand}"
             CommandParameter="OfflineJieQi"
             Content="本地揭棋" />
+
+        <Button
+            Command="{Binding NavigateToCommand}"
+            CommandParameter="OfflineCustom"
+            Content="本地残局" />
     </UniformGrid>
 </UserControl>

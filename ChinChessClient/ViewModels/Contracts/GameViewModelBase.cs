@@ -7,6 +7,7 @@ using IceTea.Pure.Extensions;
 using IceTea.Pure.Utils;
 using IceTea.Wpf.Atom.Utils;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
+using IceTea.Wpf.Core.Interactions;
 using Prism.Commands;
 using Prism.Regions;
 using Prism.Services.Dialogs;
@@ -23,7 +24,7 @@ using System.Windows.Threading;
 #pragma warning disable CS8625 // 无法将 null 字面量转换为非 null 的引用类型。
 namespace ChinChessClient.ViewModels;
 
-internal abstract class GameViewModelBase<T> : NotifyBase,
+internal abstract class GameViewModelBase<T> : NotifyBase, IDialogMessage,
     IDialogAware, IConfirmNavigationRequest, IRegionMemberLifetime where T : NotifyBase
 {
     private DispatcherTimer _timer;

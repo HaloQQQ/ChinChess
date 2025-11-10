@@ -4,7 +4,6 @@ using ChinChessClient.Models;
 using ChinChessCore.Models;
 using IceTea.Pure.Extensions;
 using IceTea.Pure.Utils;
-using IceTea.Wpf.Atom.Utils;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
 
 #pragma warning disable IDE0290 // 使用主构造函数
@@ -18,8 +17,10 @@ internal class OfflineJieQiViewModel : OfflineChinChessViewModelBase
 
     public override ChinChessMode Mode => ChinChessMode.OfflineJieQi;
 
-    public OfflineJieQiViewModel(IAppConfigFileHotKeyManager appCfgHotKeyManager) : base(appCfgHotKeyManager)
+    public OfflineJieQiViewModel(IAppConfigFileHotKeyManager appCfgHotKeyManager)
+        : base(appCfgHotKeyManager)
     {
+        this.Status = GameStatus.Ready;
     }
 
     protected override bool PushDead(InnerChinChess chess)
@@ -142,18 +143,15 @@ internal class OfflineJieQiViewModel : OfflineChinChessViewModelBase
             item.Dispose();
         }
 
-        WpfAtomUtils.BeginInvoke(() =>
-        {
-            this.Datas.Clear();
+        this.Datas.Clear();
 
-            for (int row = 0; row < 10; row++)
+        for (int row = 0; row < 10; row++)
+        {
+            for (int column = 0; column < 9; column++)
             {
-                for (int column = 0; column < 9; column++)
-                {
-                    this.Datas.Add(new ChinChessModel(row, column, true));
-                }
+                this.Datas.Add(new ChinChessModel(row, column, true));
             }
-        });
+        }
     }
 
     #endregion

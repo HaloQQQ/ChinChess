@@ -26,6 +26,12 @@ namespace ChinChessCore.Models
         /// <summary>
         /// 本地揭棋
         /// </summary>
-        OfflineJieQi
+        OfflineJieQi,
+
+        [Description("本地残局")]
+        /// <summary>
+        /// 本地残局
+        /// </summary>
+        OfflineCustom
     }
 }

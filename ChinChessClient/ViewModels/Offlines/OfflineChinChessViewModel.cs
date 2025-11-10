@@ -1,6 +1,6 @@
-﻿using ChinChessClient.Models;
+﻿using ChinChessClient.Contracts;
+using ChinChessClient.Models;
 using ChinChessCore.Models;
-using IceTea.Wpf.Atom.Utils;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
 
 #pragma warning disable CS8600 // 将 null 字面量或可能为 null 的值转换为非 null 类型。
@@ -20,6 +20,7 @@ internal class OfflineChinChessViewModel : OfflineChinChessViewModelBase
     public OfflineChinChessViewModel(IAppConfigFileHotKeyManager appCfgHotKeyManager)
         : base(appCfgHotKeyManager)
     {
+        this.Status = GameStatus.Ready;
     }
 
     protected override void InitDatas()
@@ -29,17 +30,14 @@ internal class OfflineChinChessViewModel : OfflineChinChessViewModelBase
             item.Dispose();
         }
 
-        WpfAtomUtils.BeginInvoke(() =>
-        {
-            this.Datas.Clear();
+        this.Datas.Clear();
 
-            for (int row = 0; row < 10; row++)
-            {
+        for (int row = 0; row < 10; row++)
+        {
                 for (int column = 0; column < 9; column++)
-                {
-                    this.Datas.Add(new ChinChessModel(row, column, false));
-                }
+            {
+                this.Datas.Add(new ChinChessModel(row, column, false));
             }
-        });
+        }
     }
 }

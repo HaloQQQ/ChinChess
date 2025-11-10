@@ -38,6 +38,8 @@ public partial class App : PrismApplication
         containerRegistry.RegisterForNavigation<OfflineChinChessView>("Offline");
         containerRegistry.RegisterForNavigation<OfflineJieQiView>("OfflineJieQi");
 
+        containerRegistry.RegisterForNavigation<OfflineCustomView>("OfflineCustom");
+
         containerRegistry.RegisterSingleton<MainViewModel>();
 
         var regionManager = Container.Resolve<IRegionManager>();
