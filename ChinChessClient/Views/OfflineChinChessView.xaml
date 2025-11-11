@@ -45,7 +45,6 @@
                 VerticalAlignment="Bottom"
                 HorizontalContentAlignment="Left"
                 FontSize="16"
-                ItemContainerStyle="{x:Null}"
                 ItemsSource="{Binding Records}"
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                 VirtualizingPanel.IsVirtualizing="True">
@@ -227,15 +226,14 @@
             CornerRadius="10">
             <ListBox
                 VerticalAlignment="Bottom"
-                ItemContainerStyle="{x:Null}"
+                HorizontalContentAlignment="Left"
+                FontSize="30"
                 ItemsSource="{Binding CommandStack}"
-                ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                VirtualizingPanel.IsVirtualizing="True">
                 <ListBox.Resources>
                     <Style TargetType="TextBlock">
-                        <Setter Property="Margin" Value="10,5" />
                         <Setter Property="Foreground" Value="Black" />
-
-                        <Setter Property="FontSize" Value="30" />
 
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsRed}" Value="True">
