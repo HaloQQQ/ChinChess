@@ -46,6 +46,11 @@ internal abstract class VisitorBase : DisposableBase, IVisitor
         var shuais = this.GetChesses()
                 .Where(c => c.Data.Type == ChessType.帥);
 
+        if(shuais.Count() < 2)
+        {
+            return true;
+        }
+
         var redShuai = shuais.First(c => c.Data.IsRed == true);
         var blackShuai = shuais.First(c => c.Data.IsRed == false);
 

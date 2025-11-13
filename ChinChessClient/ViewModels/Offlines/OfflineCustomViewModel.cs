@@ -35,7 +35,11 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
                                         return;
                                     }
 
-                                    if (_canPutVisitor.FaceToFace() || this.IsGameOver())
+                                    var enemyShuai = this.Datas.First(d => d.Data.Type == ChessType.帥 && d.Data.IsRed != this.IsRedTurn);
+
+                                    if (enemyShuai.Data.IsDangerous(this._canPutVisitor, enemyShuai.Pos, out _) ||
+                                        _canPutVisitor.FaceToFace() ||
+                                        this.IsGameOver())
                                     {
                                         this.PublishMsg("不允许设计死局");
                                         return;
