@@ -15,6 +15,8 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
 {
     public abstract ChinChessMode Mode { get; }
 
+    public override string Title => this.Mode.GetEnumDescription();
+
     public ObservableCollection<InnerChinChess> BlackDeads { get; private set; } = new();
     public ObservableCollection<InnerChinChess> RedDeads { get; private set; } = new();
 
@@ -163,10 +165,17 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
 
             command.Execute();
 
-            WpfAtomUtils.BeginInvoke(() =>
+            if (this.Mode < ChinChessMode.Offline)
+            {
+                WpfAtomUtils.BeginInvokeAtOnce(() =>
+                {
+                    CommandStack.Insert(0, command);
+                });
+            }
+            else
             {
                 CommandStack.Insert(0, command);
-            });
+            }
 
             return true;
         }

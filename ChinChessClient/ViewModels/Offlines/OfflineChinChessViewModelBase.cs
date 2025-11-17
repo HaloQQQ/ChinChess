@@ -11,7 +11,7 @@ internal abstract class OfflineChinChessViewModelBase : ChinChessViewModelBase
 {
     protected override string Name => this.IsRedTurn ? "红色" : "黑色";
 
-    public OfflineChinChessViewModelBase(IAppConfigFileHotKeyManager appCfgHotKeyManager) 
+    public OfflineChinChessViewModelBase(IAppConfigFileHotKeyManager appCfgHotKeyManager)
         : base(appCfgHotKeyManager)
     {
         this.InitDatas();
@@ -41,7 +41,6 @@ internal abstract class OfflineChinChessViewModelBase : ChinChessViewModelBase
             return;
         }
 
-        var targetIsEmpty = model.Data.IsEmpty;
         // 选中
         bool canSelect = !model.Data.IsEmpty && model.Data.IsRed == this.IsRedTurn;
         if (canSelect)
@@ -57,6 +56,13 @@ internal abstract class OfflineChinChessViewModelBase : ChinChessViewModelBase
 
             return;
         }
+
+        this.TryPutTo(model);
+    }
+
+    protected bool TryPutTo(ChinChessModel model)
+    {
+        var targetIsEmpty = model.Data.IsEmpty;
 
         // 移动棋子到这里 或 吃子
         if (this.CurrentChess.IsNotNullAnd(c => this.TryPutTo(c, model.Pos)))
@@ -82,7 +88,11 @@ internal abstract class OfflineChinChessViewModelBase : ChinChessViewModelBase
             {
                 this.IsRedTurn = !IsRedTurn;
             }
+
+            return true;
         }
+
+        return false;
     }
 
     protected override void Revoke_CommandExecute()

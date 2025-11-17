@@ -43,5 +43,10 @@
             Command="{Binding NavigateToCommand}"
             CommandParameter="OfflineCustom"
             Content="本地残局" />
+
+        <Button
+            Command="{Binding NavigateToCommand}"
+            CommandParameter="OfflineAuto"
+            Content="人机对战" />
     </UniformGrid>
 </UserControl>

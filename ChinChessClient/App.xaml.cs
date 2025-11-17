@@ -1,4 +1,5 @@
-﻿using ChinChessClient.ViewModels;
+﻿using ChinChessClient.AutomationEngines;
+using ChinChessClient.ViewModels;
 using ChinChessClient.Views;
 using IceTea.Pure.Contracts;
 using IceTea.Pure.Extensions;
@@ -9,6 +10,7 @@ using Prism.DryIoc;
 using Prism.Ioc;
 using Prism.Mvvm;
 using Prism.Regions;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Navigation;
 
@@ -43,14 +45,30 @@ public partial class App : PrismApplication
         containerRegistry.RegisterForNavigation<OfflineJieQiView>("OfflineJieQi");
 
         containerRegistry.RegisterForNavigation<OfflineCustomView>("OfflineCustom");
+        containerRegistry.RegisterForNavigation<OfflineAutoView>("OfflineAuto");
+
 
         containerRegistry.RegisterSingleton<MainViewModel>();
+
+        containerRegistry.Register<IEleEyeEngine, EleEyeEngine>();
 
         var regionManager = Container.Resolve<IRegionManager>();
 
         regionManager.RegisterViewWithRegion<MainView>("ChinChessRegion");
 
         ViewModelLocationProvider.Register<MainWindow, MainViewModel>();
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        base.OnExit(e);
+
+        var eleeyeProcessArr = Process.GetProcessesByName("eleeye");
+
+        foreach (var item in eleeyeProcessArr)
+        {
+            item.Kill();
+        }
     }
 
     protected override void OnLoadCompleted(NavigationEventArgs e)

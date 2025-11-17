@@ -29,7 +29,7 @@ internal abstract class GameViewModelBase<T> : NotifyBase, IDialogMessage,
 {
     private DispatcherTimer _timer;
 
-    public ObservableCollection<IChinChessCommand> CommandStack { get; private set; }
+    public ObservableCollection<MoveCommand> CommandStack { get; private set; }
 
     private IAppConfigFileHotKeyManager _appCfgHotKeyManager;
 

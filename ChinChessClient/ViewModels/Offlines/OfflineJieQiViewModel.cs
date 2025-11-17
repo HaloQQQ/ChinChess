@@ -13,8 +13,6 @@ namespace ChinChessClient.ViewModels;
 
 internal class OfflineJieQiViewModel : OfflineChinChessViewModelBase
 {
-    public override string Title => "本地版揭棋";
-
     public override ChinChessMode Mode => ChinChessMode.OfflineJieQi;
 
     public OfflineJieQiViewModel(IAppConfigFileHotKeyManager appCfgHotKeyManager)

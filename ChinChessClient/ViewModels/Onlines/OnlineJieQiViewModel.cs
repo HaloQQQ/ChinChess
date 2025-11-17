@@ -16,8 +16,6 @@ namespace ChinChessClient.ViewModels;
 
 internal class OnlineJieQiViewModel : OnlineChinChessViewModelBase
 {
-    public override string Title => "揭棋在线版";
-
     public override ChinChessMode Mode => ChinChessMode.OnlineJieQi;
 
     public OnlineJieQiViewModel(IAppConfigFileHotKeyManager appCfgHotKeyManager, IConfigManager configManager)

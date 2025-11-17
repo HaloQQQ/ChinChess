@@ -38,7 +38,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="IceTea.Wpf.Core" Version="1.2.10" />
+    <PackageReference Include="IceTea.Pure" Version="1.2.16" />
+    <PackageReference Include="IceTea.Wpf.Core" Version="1.2.11" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.10" />
     <PackageReference Include="Prism.DryIoc" Version="8.1.97" />
   </ItemGroup>
@@ -80,6 +81,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="appsettings.yml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\EleEyes\BOOK.DAT">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\EleEyes\ELEEYE.EXE">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

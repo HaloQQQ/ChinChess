@@ -36,7 +36,7 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
     {
         try
         {
-            AppUtils.StartProcess("ChinChessServer.exe");
+            AppUtils.TryStartProcess("ChinChessServer.exe");
 
             this.Status = GameStatus.NotInitialized;
 

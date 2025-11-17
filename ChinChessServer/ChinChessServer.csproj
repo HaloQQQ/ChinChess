@@ -17,7 +17,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>compile; runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="IceTea.Atom" Version="1.2.15" />
+    <PackageReference Include="IceTea.Atom" Version="1.2.16" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.21" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
   </ItemGroup>

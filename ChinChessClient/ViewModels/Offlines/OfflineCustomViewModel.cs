@@ -18,8 +18,6 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
 {
     public override ChinChessMode Mode => ChinChessMode.OfflineCustom;
 
-    public override string Title => "本地残局";
-
     public IList<CustomChess> TemplateDatas { get; private set; } = new ObservableCollection<CustomChess>();
 
     public OfflineCustomViewModel(IAppConfigFileHotKeyManager appCfgHotKeyManager)

@@ -20,8 +20,6 @@ namespace ChinChessClient.ViewModels;
 
 internal class OnlineChinChessViewModel : OnlineChinChessViewModelBase, IBackup
 {
-    public override string Title => "在线版";
-
     public override ChinChessMode Mode => ChinChessMode.Online;
 
     protected override bool IsTurnToDo => !this.IsMock && base.IsTurnToDo;
