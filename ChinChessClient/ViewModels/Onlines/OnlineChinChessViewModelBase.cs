@@ -99,31 +99,14 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
             return allowHeQi;
         });
 
-        _signalr.On("RecvGiveUpReq", () =>
+        _signalr.On("RecvGiveUp", () =>
         {
-            var tempStatus = this.Status;
-            this._status = GameStatus.NotReady;
-            RaisePropertyChanged(nameof(Status));
-
-            var result = MessageBox.Show("对方请求认输，是否同意？", "投降", MessageBoxButton.YesNo);
-
-            var allowGiveUp = result == MessageBoxResult.Yes;
-            var msg = "对方请求认输，已" + (allowGiveUp ? "同意" : "拒绝");
+            var msg = "对方已认输，我方获胜";
 
             this.PublishMsg(msg);
             this.Log(this.Name, msg, this.IsRedRole == true);
 
-            if (allowGiveUp)
-            {
-                this.Status = GameStatus.Stoped;
-            }
-            else
-            {
-                this._status = tempStatus;
-                RaisePropertyChanged(nameof(Status));
-            }
-
-            return allowGiveUp;
+            this.Status = GameStatus.Stoped;
         });
 
 
@@ -297,28 +280,17 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
         this.Log(this.Name, msg, this.IsRedRole == true);
     }
 
-    private async void GiveUp_CommandExecute()
+    private void GiveUp_CommandExecute()
     {
-        var tempStatus = this.Status;
-        this._status = GameStatus.NotReady;
-        RaisePropertyChanged(nameof(Status));
+        _signalr.InvokeAsync("InformGiveUp");
 
-        bool allowGiveUp = await _signalr.InvokeAsync<bool>("RequestGiveUp");
+        this.Status = GameStatus.Stoped;
 
-        if (allowGiveUp)
-        {
-            this.Status = GameStatus.Stoped;
-        }
-        else
-        {
-            this._status = tempStatus;
-            RaisePropertyChanged(nameof(Status));
-        }
-
-        var msg = "请求认输，对方" + (allowGiveUp ? "同意" : "拒绝");
-
+        var msg = "已认输";
         this.PublishMsg(msg);
         this.Log(this.Name, msg, this.IsRedRole == true);
+
+        ContainerLocator.Container.Resolve<IRegionManager>().Regions["ChinChessRegion"].NavigationService.Journal.GoBack();
     }
 
     #region override

@@ -32,11 +32,22 @@ public class ChinChessHub : Hub
         }
     }
 
+    public Task InformGiveUp()
+    {
+        var currentUser = Context.ConnectionId;
+
+        if (_usersNormal.TryGetValue(currentUser, out var toUser)
+            || _usersJieqi.TryGetValue(currentUser, out toUser))
+        {
+            return Clients.Clients<IClientProxy>(toUser)
+                         .SendAsync("RecvGiveUp");
+        }
+
+        return Task.FromException(new Exception("对手不存在"));
+    }
+
     public Task<bool> RequestHeQi()
         => this.Request("RecvHeQiReq");
-
-    public Task<bool> RequestGiveUp()
-        => this.Request("RecvGiveUpReq");
 
     public Task<bool> RequestRevoke()
         => this.Request("RecvRevokeReq");
@@ -51,9 +62,9 @@ public class ChinChessHub : Hub
         if (_usersNormal.TryGetValue(currentUser, out var toUser)
             || _usersJieqi.TryGetValue(currentUser, out toUser))
         {
-            bool isGiveUp = await Clients.Client(toUser).InvokeAsync<bool>(clientMethod, default);
+            bool result = await Clients.Client(toUser).InvokeAsync<bool>(clientMethod, default);
 
-            return isGiveUp;
+            return result;
         }
 
         return false;
