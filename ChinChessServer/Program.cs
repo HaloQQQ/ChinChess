@@ -22,17 +22,9 @@ public class Program
 
         var builder = WebApplication.CreateBuilder(args);
 
-        //builder.Services.AddAuthorization();
-
-        //builder.Services.AddEndpointsApiExplorer();
-
         builder.Services.AddSignalR();
 
         var app = builder.Build();
-
-        //app.UseHttpsRedirection();
-
-        //app.UseAuthorization();
 
         app.MapHub<ChinChessHub>("/ChinChess");
 

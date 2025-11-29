@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="..\ChinChessClient\appsettings.json" Link="appsettings.json" />
     <Content Include="服务器.ico" />
   </ItemGroup>
 
@@ -18,11 +19,11 @@
       <IncludeAssets>compile; runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="IceTea.Atom" Version="1.2.16" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.21" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ChinChessCore\ChinChessCore.csproj" />
+    <ProjectReference Include="..\ChinChessCore\ChinChessCore.csproj">
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
 </Project>

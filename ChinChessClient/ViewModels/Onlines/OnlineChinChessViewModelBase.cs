@@ -13,6 +13,9 @@ using DryIoc;
 using Prism.Ioc;
 using Prism.Regions;
 using IceTea.Pure.Utils;
+using IceTea.Wpf.Atom.Utils;
+using System.Net.Http;
+using System.ComponentModel;
 
 #pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
 #pragma warning disable CS8602 // 解引用可能出现空引用。
@@ -36,8 +39,6 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
     {
         try
         {
-            AppUtils.TryStartProcess("ChinChessServer.exe");
-
             this.Status = GameStatus.NotInitialized;
 
             this.InitSignalR(configManager);
@@ -199,15 +200,48 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
 
         try
         {
-            await _signalr.StartAsync();
+            try
+            {
+                await _signalr.StartAsync();
+            }
+            catch (HttpRequestException httpEx)
+            {
+                try
+                {
+                    AppUtils.TryStartProcess("ChinChessServer.exe");
+
+                    await _signalr.StartAsync();
+                }
+                catch (Win32Exception win32Ex)
+                {
+                    throw new AggregateException("服务端未启动，尝试启动本地服务程序失败", httpEx, win32Ex);
+                }
+            }
+
+            _signalr.Closed += Disconnect_Handler;
         }
         catch (Exception ex)
         {
-            var regionManager = ContainerLocator.Current.Resolve<IRegionManager>();
-            regionManager.Regions["ChinChessRegion"].NavigationService.Journal.GoBack();
+            this.ReturnToMainPage();
 
             MessageBox.Show($"服务器未启动..{AppStatics.NewLineChars}{ex.Message}");
         }
+    }
+
+    private void ReturnToMainPage()
+    {
+        WpfAtomUtils.InvokeAtOnce(() =>
+        {
+            var regionManager = ContainerLocator.Current.Resolve<IRegionManager>();
+            regionManager.Regions["ChinChessRegion"].NavigationService.Journal.GoBack();
+        });
+    }
+
+    private Task Disconnect_Handler(Exception? exception)
+    {
+        this.ReturnToMainPage();
+
+        return Task.FromException(exception);
     }
 
     protected override void InitHotKeysCore(IAppHotKeyGroup appHotkeyGroup)
@@ -290,7 +324,7 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
         this.PublishMsg(msg);
         this.Log(this.Name, msg, this.IsRedRole == true);
 
-        ContainerLocator.Container.Resolve<IRegionManager>().Regions["ChinChessRegion"].NavigationService.Journal.GoBack();
+        this.ReturnToMainPage();
     }
 
     #region override
@@ -481,6 +515,8 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
     {
         GiveUpCommand = null;
         HeQiCommand = null;
+
+        _signalr.Closed -= Disconnect_Handler;
 
         _signalr.DisposeAsync();
         _signalr = null;

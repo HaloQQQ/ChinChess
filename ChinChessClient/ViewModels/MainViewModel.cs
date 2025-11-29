@@ -9,6 +9,7 @@ using IceTea.Wpf.Atom.Contracts.FileFilters;
 using IceTea.Wpf.Atom.Contracts.MyEvents;
 using IceTea.Wpf.Atom.Utils;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
+using IceTea.Wpf.Core.Utils;
 using Prism.Commands;
 using Prism.Regions;
 using System.Windows;

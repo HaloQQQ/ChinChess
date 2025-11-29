@@ -10,6 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="..\ChinChessServer\bin\Release\net8.0\ChinChessServer.runtimeconfig.json" Link="ChinChessServer.runtimeconfig.json" />
+    <Content Include="appsettings.yml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Resources\Medias\begin.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -38,17 +42,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="IceTea.Pure" Version="1.2.16" />
-    <PackageReference Include="IceTea.Wpf.Core" Version="1.2.11" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.10" />
+    <PackageReference Include="IceTea.Wpf.Core" Version="1.2.12" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.22" />
     <PackageReference Include="Prism.DryIoc" Version="8.1.97" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ChinChessCore\ChinChessCore.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <ProjectReference Include="..\..\IceTea\IceTea.Wpf.Core\IceTea.Wpf.Core.csproj" />
+    <ProjectReference Include="..\ChinChessServer\ChinChessServer.csproj" />
     <Resource Include="Resources\iconfont.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
@@ -77,12 +81,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="appsettings.yml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="Resources\EleEyes\BOOK.DAT">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
