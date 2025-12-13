@@ -244,12 +244,54 @@
                             </ListBox.ItemsPanel>
                         </ListBox>
 
-                        <Button
-                            Padding="3"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Top"
-                            Command="{Binding CustomOverCommand}"
-                            Style="{StaticResource Button_Icon_Close}" />
+                        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top">
+                            <Button
+                                Padding="3"
+                                Command="{Binding CustomOverCommand}"
+                                FontSize="25"
+                                Style="{StaticResource Button_Icon_Close}"
+                                ToolTip="设计完成" />
+
+                            <ToggleButton
+                                Content="&#xe64d;"
+                                FontSize="30"
+                                IsChecked="{Binding IsSaving}"
+                                IsEnabled="{Binding IsSaving, Converter={StaticResource OppositeBoolConverter}}"
+                                Style="{StaticResource ButtonBase_Icon_ScaleDown_Small_HoverBlue}"
+                                ToolTip="保存残局" />
+                            <Popup
+                                IsOpen="{Binding IsSaving}"
+                                Placement="Center"
+                                PlacementTarget="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                                StaysOpen="True">
+                                <Border Background="{StaticResource PopupBackground}" CornerRadius="10">
+                                    <Grid>
+                                        <TextBox
+                                            Width="400"
+                                            Height="80"
+                                            Margin="50"
+                                            FontSize="30"
+                                            MyAttachProperty.Command="{Binding SaveDesignCommand}"
+                                            MyAttachProperty.CommandParameter="{Binding DesignName}"
+                                            MyAttachProperty.DoubleValue="35"
+                                            MyAttachProperty.IconFontText="&#xe64f;"
+                                            MyAttachProperty.PlaceHolder="残局名"
+                                            Style="{StaticResource TextBox_PlaceHolderAsLable_Execute}"
+                                            Text="{Binding DesignName, UpdateSourceTrigger=PropertyChanged, Delay=50}" />
+
+                                        <ToggleButton
+                                            Padding="3"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"
+                                            Content="&#xe624;"
+                                            FontSize="25"
+                                            IsChecked="{Binding IsSaving}"
+                                            Style="{StaticResource ButtonBase_Icon_ScaleUp_Small_HoverBlue}"
+                                            ToolTip="取消" />
+                                    </Grid>
+                                </Border>
+                            </Popup>
+                        </StackPanel>
                     </Grid>
                 </Grid>
 

@@ -1,7 +1,9 @@
 ﻿using ChinChessClient.Contracts;
 using ChinChessClient.Models;
+using ChinChessCore.Contracts;
 using ChinChessCore.Models;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
+using Prism.Regions;
 
 #pragma warning disable CS8600 // 将 null 字面量或可能为 null 的值转换为非 null 类型。
 #pragma warning disable CS8602 // 解引用可能出现空引用。
@@ -35,6 +37,38 @@ internal class OfflineChinChessViewModel : OfflineChinChessViewModelBase
                 for (int column = 0; column < 9; column++)
             {
                 this.Datas.Add(new ChinChessModel(row, column, false));
+            }
+        }
+    }
+
+    public override void OnNavigatedTo(NavigationContext navigationContext)
+    {
+        base.OnNavigatedTo(navigationContext);
+
+        var parameters = navigationContext.Parameters;
+
+        if (parameters.TryGetValue<EndGameModel>("EndGame", out EndGameModel data))
+        {
+            foreach (var item in this.Datas)
+            {
+                item.Dispose();
+            }
+
+            this.Datas.Clear();
+
+            var list = ChinChessSerializer.Deserialize(data.Data);
+
+            for (int row = 0; row < 10; row++)
+            {
+                for (int column = 0; column < 9; column++)
+                {
+                    this.Datas.Add(new ChinChessModel(row, column));
+                }
+            }
+
+            foreach (var item in list)
+            {
+                this.Datas[item.Pos.Index].Reload(item);
             }
         }
     }

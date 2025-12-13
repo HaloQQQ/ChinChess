@@ -1,6 +1,8 @@
 ﻿using ChinChessClient.Contracts;
 using ChinChessClient.Models;
+using ChinChessCore.Contracts;
 using ChinChessCore.Models;
+using IceTea.Pure.Contracts;
 using IceTea.Pure.Utils;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
 using Prism.Commands;
@@ -14,32 +16,22 @@ namespace ChinChessClient.ViewModels;
 #pragma warning disable CS8602 // 解引用可能出现空引用。
 #pragma warning disable CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑添加 "required" 修饰符或声明为可为 null。
 #pragma warning disable CS8625 // 无法将 null 字面量转换为非 null 的引用类型。
+#pragma warning disable CS8629 // 可为 null 的值类型可为 null。
 internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
 {
     public override ChinChessMode Mode => ChinChessMode.OfflineCustom;
 
     public IList<CustomChess> TemplateDatas { get; private set; } = new ObservableCollection<CustomChess>();
 
-    public OfflineCustomViewModel(IAppConfigFileHotKeyManager appCfgHotKeyManager)
+    public OfflineCustomViewModel(IAppConfigFileHotKeyManager appCfgHotKeyManager, IConfigManager configManager)
         : base(appCfgHotKeyManager)
     {
         this.Status = GameStatus.NotInitialized;
 
         CustomOverCommand = new DelegateCommand(() =>
                                 {
-                                    if (this.Datas.Count(d => d.Data.Type == ChessType.帥) != 2)
+                                    if (!this.CanUse())
                                     {
-                                        this.PublishMsg("必须要设置将帅");
-                                        return;
-                                    }
-
-                                    var enemyShuai = this.Datas.First(d => d.Data.Type == ChessType.帥 && d.Data.IsRed != this.IsRedTurn);
-
-                                    if (enemyShuai.Data.IsDangerous(this._canPutVisitor, enemyShuai.Pos, out _) ||
-                                        _canPutVisitor.FaceToFace() ||
-                                        this.IsGameOver())
-                                    {
-                                        this.PublishMsg("不允许设计死局");
                                         return;
                                     }
 
@@ -56,6 +48,50 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
         .ObservesProperty(() => this.IsCustomOver)
         .ObservesProperty(() => this.IsRedTurn)
         .ObservesProperty(() => this.CurrentChess);
+
+        SaveDesignCommand = new DelegateCommand<string>(name =>
+        {
+            if (!this.CanUse())
+            {
+                return;
+            }
+
+            IsCustomOver = true;
+            this.Status = GameStatus.Ready;
+
+            var chessesInfo = this.Datas.Where(d => !d.Data.IsEmpty)
+                                .Select(m => new ChinChessInfo(m.Pos, isRed: (bool)m.Data.IsRed, chessType: (ChessType)m.Data.Type))
+                                .ToArray();
+
+            var infoStr = ChinChessSerializer.Serialize(chessesInfo);
+
+            configManager.WriteConfigNode(infoStr, new string[] { "EndGames", name });
+
+            IsSaving = false;
+
+            DesignName = string.Empty;
+        }).ObservesCanExecute(() => IsSaving);
+    }
+
+    private bool CanUse()
+    {
+        if (this.Datas.Count(d => d.Data.Type == ChessType.帥) != 2)
+        {
+            this.PublishMsg("必须要设置将帅");
+            return false;
+        }
+
+        var enemyShuai = this.Datas.First(d => d.Data.Type == ChessType.帥 && d.Data.IsRed != this.IsRedTurn);
+
+        if (enemyShuai.Data.IsDangerous(this._canPutVisitor, enemyShuai.Pos, out _) ||
+            _canPutVisitor.FaceToFace() ||
+            this.IsGameOver())
+        {
+            this.PublishMsg("不允许设计死局");
+            return false;
+        }
+
+        return true;
     }
 
     public void ReturnData(ChinChessModel chinChessModel)
@@ -151,7 +187,23 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
         private set => SetProperty<bool>(ref _isCustomOver, value);
     }
 
+
+    private bool _isSaving;
+    public bool IsSaving
+    {
+        get => _isSaving;
+        set => SetProperty<bool>(ref _isSaving, value);
+    }
+
+    private string _designName;
+    public string DesignName
+    {
+        get => _designName;
+        set => SetProperty<string>(ref _designName, value);
+    }
+
     public ICommand CustomOverCommand { get; private set; }
+    public ICommand SaveDesignCommand { get; private set; }
 
     protected override void DisposeCore()
     {

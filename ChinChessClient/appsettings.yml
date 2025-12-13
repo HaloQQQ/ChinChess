@@ -3,10 +3,6 @@ BusinessConfig:
   NeedWarn: true
   HotKeys:
     App:
-      本地对战:
-        重玩: 重玩 (Alt+R+True)
-        悔棋: 悔棋 (Control+Z+True)
-        棋盘换向: 棋盘换向 (Alt+D+True)
       线上对战:
         重玩: 重玩 (Alt+R+True)
         悔棋: 悔棋 (Control+Z+True)
@@ -14,3 +10,12 @@ BusinessConfig:
         认输: 认输 (Alt+F+True)
         和棋: 和棋 (Alt+H+True)
         模拟: 模拟 (Alt+M+True)
+  EndGames:
+    七星聚会: C04,G05,b13,E24,b25,b68,B71,B74,a77,B83,B85,g94,c96,c97
+    征西: A04,G05,b12,b14,C25,a36,a46,c56,c58,B70,B73,B84,g93,e96
+    野马操田: E02,F03,G04,F14,E24,d46,c47,c48,e52,C61,b62,b64,B73,e74,B84,g93
+    带子入朝: C00,A03,G04,b13,b23,E24,b27,c28,b48,b52,B83,g94
+    大九连环: G05,b10,b14,b18,C25,A28,B38,b54,b56,a77,B82,B83,a87,g94
+    小征东: A04,G05,b13,b14,C25,a38,a48,c57,b66,c68,B73,B84,g93
+    火烧连营: G03,c14,E24,a28,b30,b41,c46,a47,A48,b52,e56,B74,B83,B84,B87,g95
+    炮打两狼关: C01,G03,a05,c06,b11,b15,b26,A38,b64,B66,B83,C85,g94

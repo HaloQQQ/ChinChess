@@ -1,4 +1,5 @@
 ﻿using ChinChessClient.Contracts;
+using ChinChessClient.Contracts.Events;
 using ChinChessClient.Views;
 using IceTea.Pure.BaseModels;
 using IceTea.Pure.Contracts;
@@ -9,8 +10,8 @@ using IceTea.Wpf.Atom.Contracts.FileFilters;
 using IceTea.Wpf.Atom.Contracts.MyEvents;
 using IceTea.Wpf.Atom.Utils;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
-using IceTea.Wpf.Core.Utils;
 using Prism.Commands;
+using Prism.Events;
 using Prism.Regions;
 using System.Windows;
 using System.Windows.Input;
@@ -23,16 +24,16 @@ internal class MainViewModel : NotifyBase, INavigationAware
 {
     public IAppHotKeyManager AppConfigFileHotKeyManager { get; private set; }
 
-    public MainViewModel(IRegionManager regionManager, IConfigManager configManager, IAppConfigFileHotKeyManager appConfigFileHotKeyManager)
+    public MainViewModel(IRegionManager regionManager, IConfigManager configManager, IAppConfigFileHotKeyManager appConfigFileHotKeyManager, IEventAggregator eventAggregator)
     {
         AppConfigFileHotKeyManager = appConfigFileHotKeyManager.AssertArgumentNotNull(nameof(IAppHotKeyManager));
 
         this.NavigateToCommand = new DelegateCommand<string>(
             uri => regionManager.RequestNavigate("ChinChessRegion", uri, nr =>
             {
-                if (nr.IsNotNullAnd(_ => _.Context.Parameters.ContainsKey("Title")))
+                if (nr.IsNotNullAnd(_ => _.Context.Parameters.ContainsKey(nameof(Title))))
                 {
-                    this.Title = nr.Context.Parameters["Title"].As<string>();
+                    this.Title = nr.Context.Parameters[nameof(Title)].As<string>();
                 }
             }, new NavigationParameters()
             {
@@ -75,6 +76,8 @@ internal class MainViewModel : NotifyBase, INavigationAware
 
         this.NeedWarn = configManager.ReadConfigNode<bool>(nameof(NeedWarn).FillToArray(), true);
         configManager.SetConfig += config => config.WriteConfigNode<bool>(NeedWarn, nameof(NeedWarn).FillToArray());
+
+        eventAggregator.GetEvent<MainTitleChangedEvent>().Subscribe(title => this.Title = title);
     }
 
     #region Porps

@@ -1,4 +1,5 @@
 ﻿using ChinChessClient.Visitors;
+using ChinChessCore.Contracts;
 using ChinChessCore.Models;
 using IceTea.Pure.BaseModels;
 using IceTea.Pure.Extensions;
@@ -13,14 +14,12 @@ namespace ChinChessClient.Models;
 [DebuggerDisplay("IsRed={Data.IsRed}, Type={Data.Type}")]
 internal class ChinChessModel : NotifyBase, IChineseChess
 {
-    public int Row { get; }
-    public int Column { get; }
+    public int Row => this.Pos.Row;
+    public int Column => this.Pos.Column;
 
     public ChinChessModel(int row, int column)
     {
-        this.Row = row;
-        this.Column = column;
-        this.Pos = new Position(this.Row, this.Column);
+        this.Pos = new Position(row, column);
 
         this.Data = InnerChinChess.Empty;
     }
@@ -29,9 +28,49 @@ internal class ChinChessModel : NotifyBase, IChineseChess
     {
         this.InitData(row, column, isJieQi);
 
-        this.Row = row;
-        this.Column = column;
-        this.Pos = new Position(this.Row, this.Column);
+        this.Pos = new Position(row, column);
+    }
+
+    public bool Reload(ChinChessInfo chessInfo)
+    {
+        var chessType = chessInfo.ChessType;
+        var isRed = chessInfo.IsRed;
+        var pos = chessInfo.Pos;
+
+        InnerChinChess temp = InnerChinChess.Empty;
+
+        switch (chessType)
+        {
+            case ChessType.炮:
+                temp = new ChinChessPao(isRed);
+                break;
+            case ChessType.兵:
+                temp = new ChinChessBing(isRed);
+                break;
+            case ChessType.車:
+                temp = new ChinChessJu(isRed);
+                break;
+            case ChessType.馬:
+                temp = new ChinChessMa(isRed);
+                break;
+            case ChessType.相:
+                temp = new ChinChessXiang(isRed);
+                break;
+            case ChessType.仕:
+                temp = new ChinChessShi(isRed);
+                break;
+            case ChessType.帥:
+                temp = new ChinChessShuai(isRed);
+                break;
+            default:
+                throw new IndexOutOfRangeException();
+        }
+
+        AppUtils.AssertDataValidation(temp.IsPosValid(pos), $"{chessType}{isRed}被放置的位置不合法");
+
+        this._data = temp;
+
+        return true;
     }
 
     public Position Pos { get; }

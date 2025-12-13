@@ -44,9 +44,11 @@ public partial class App : PrismApplication
         containerRegistry.RegisterForNavigation<OfflineChinChessView>("Offline");
         containerRegistry.RegisterForNavigation<OfflineJieQiView>("OfflineJieQi");
 
-        containerRegistry.RegisterForNavigation<OfflineCustomView>("OfflineCustom");
         containerRegistry.RegisterForNavigation<OfflineAutoView>("OfflineAuto");
 
+        containerRegistry.RegisterForNavigation<OfflineCustomView>("OfflineCustom");
+        containerRegistry.RegisterForNavigation<OfflineEndGamesView>("OfflineEndGames");
+        
 
         containerRegistry.RegisterSingleton<MainViewModel>();
 

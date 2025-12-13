@@ -16,10 +16,13 @@ namespace ChinChessCore.Models
         [Description("本地揭棋")]
         OfflineJieQi,
 
+        [Description("人机对战")]
+        OfflineAuto,
+
         [Description("本地残局")]
         OfflineCustom,
 
-        [Description("人机对战")]
-        OfflineAuto
+        [Description("残局挑战")]
+        OfflineEndGames
     }
 }

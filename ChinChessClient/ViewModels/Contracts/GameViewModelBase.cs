@@ -1,6 +1,7 @@
 ﻿using ChinChessClient.Commands;
 using ChinChessClient.Contracts;
 using ChinChessClient.Models;
+using ChinChessClient.ViewModels.Contracts;
 using IceTea.Pure.BaseModels;
 using IceTea.Pure.Contracts;
 using IceTea.Pure.Extensions;
@@ -24,8 +25,8 @@ using System.Windows.Threading;
 #pragma warning disable CS8625 // 无法将 null 字面量转换为非 null 的引用类型。
 namespace ChinChessClient.ViewModels;
 
-internal abstract class GameViewModelBase<T> : NotifyBase, IDialogMessage,
-    IDialogAware, IConfirmNavigationRequest, IRegionMemberLifetime where T : NotifyBase
+internal abstract class GameViewModelBase<T> : NavigateViewModelBase, IDialogMessage,
+    IDialogAware where T : NotifyBase
 {
     private DispatcherTimer _timer;
 
@@ -357,7 +358,6 @@ internal abstract class GameViewModelBase<T> : NotifyBase, IDialogMessage,
     }
 
     #region IDialogAware
-    public abstract string Title { get; }
 
 #pragma warning disable CS0067
     public event Action<IDialogResult> RequestClose;
@@ -378,7 +378,7 @@ internal abstract class GameViewModelBase<T> : NotifyBase, IDialogMessage,
     #endregion
 
     #region IConfirmNavigationRequest
-    public void ConfirmNavigationRequest(NavigationContext navigationContext, Action<bool> continuationCallback)
+    public override void ConfirmNavigationRequest(NavigationContext navigationContext, Action<bool> continuationCallback)
     {
         bool canNavigate = true;
 
@@ -395,12 +395,7 @@ internal abstract class GameViewModelBase<T> : NotifyBase, IDialogMessage,
         continuationCallback(canNavigate);
     }
 
-    public bool IsNavigationTarget(NavigationContext navigationContext)
-    {
-        return true;
-    }
-
-    public void OnNavigatedFrom(NavigationContext navigationContext)
+    public override void OnNavigatedFrom(NavigationContext navigationContext)
     {
         if (this.Status != GameStatus.Ready)
         {
@@ -408,9 +403,9 @@ internal abstract class GameViewModelBase<T> : NotifyBase, IDialogMessage,
         }
     }
 
-    public void OnNavigatedTo(NavigationContext navigationContext)
+    public override void OnNavigatedTo(NavigationContext navigationContext)
     {
-        navigationContext.Parameters.Add("Title", this.Title);
+        base.OnNavigatedTo(navigationContext);
 
         if (navigationContext.Parameters.ContainsKey("NeedWarn"))
         {
@@ -419,7 +414,4 @@ internal abstract class GameViewModelBase<T> : NotifyBase, IDialogMessage,
     }
     #endregion
 
-    #region IRegionMemberLifetime
-    public bool KeepAlive => false;
-    #endregion
 }
