@@ -1,5 +1,5 @@
-﻿using ChinChessClient.Models;
-using ChinChessClient.ViewModels;
+﻿using ChinChessClient.ViewModels;
+using ChinChessCore.Models;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;

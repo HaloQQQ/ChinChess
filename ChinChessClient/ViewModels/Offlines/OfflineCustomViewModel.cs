@@ -1,11 +1,13 @@
-﻿using ChinChessClient.Contracts;
-using ChinChessClient.Models;
+using ChinChessClient.Contracts.Events;
 using ChinChessCore.Contracts;
 using ChinChessCore.Models;
 using IceTea.Pure.Contracts;
+using IceTea.Pure.Extensions;
 using IceTea.Pure.Utils;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
 using Prism.Commands;
+using Prism.Events;
+using Prism.Regions;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 
@@ -19,30 +21,36 @@ namespace ChinChessClient.ViewModels;
 #pragma warning disable CS8629 // 可为 null 的值类型可为 null。
 internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
 {
+    private IEventAggregator _eventAggregator;
+
     public override ChinChessMode Mode => ChinChessMode.OfflineCustom;
+
+    private EndGameModel _endGameModel;
 
     public IList<CustomChess> TemplateDatas { get; private set; } = new ObservableCollection<CustomChess>();
 
-    public OfflineCustomViewModel(IAppConfigFileHotKeyManager appCfgHotKeyManager, IConfigManager configManager)
+    public OfflineCustomViewModel(IAppConfigFileHotKeyManager appCfgHotKeyManager, IConfigManager configManager, IEventAggregator eventAggregator)
         : base(appCfgHotKeyManager)
     {
-        this.Status = GameStatus.NotInitialized;
+        _eventAggregator = eventAggregator;
+
+        this.Status = EnumGameStatus.NotInitialized;
 
         CustomOverCommand = new DelegateCommand(() =>
                                 {
-                                    if (!this.CanUse())
+                                    if (!CanUse())
                                     {
                                         return;
                                     }
 
                                     IsCustomOver = true;
-                                    this.Status = GameStatus.Ready;
+                                    this.Status = EnumGameStatus.Ready;
                                 })
                                 .ObservesProperty(() => IsCustomOver);
 
         SelectOrPutCommand = new DelegateCommand<ChinChessModel>(
-            SelectOrPut_CommandExecute,
-            model => IsCustomOver && this.Status == GameStatus.Ready && model != null && CurrentChess != model
+            model => SelectOrPut_CommandExecute(model),
+            model => IsCustomOver && this.Status == EnumGameStatus.Ready && model != null && CurrentChess != model
         )
         .ObservesProperty(() => this.Status)
         .ObservesProperty(() => this.IsCustomOver)
@@ -51,13 +59,13 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
 
         SaveDesignCommand = new DelegateCommand<string>(name =>
         {
-            if (!this.CanUse())
+            if (!CanUse())
             {
                 return;
             }
 
             IsCustomOver = true;
-            this.Status = GameStatus.Ready;
+            this.Status = EnumGameStatus.Ready;
 
             var chessesInfo = this.Datas.Where(d => !d.Data.IsEmpty)
                                 .Select(m => new ChinChessInfo(m.Pos, isRed: (bool)m.Data.IsRed, chessType: (ChessType)m.Data.Type))
@@ -65,33 +73,67 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
 
             var infoStr = ChinChessSerializer.Serialize(chessesInfo);
 
-            configManager.WriteConfigNode(infoStr, new string[] { "EndGames", name });
+            _endGameModel = new EndGameModel(name, infoStr, string.Empty);
+
+            configManager.WriteConfigNode<EndGameModel>(_endGameModel, ["EndGames", name]);
 
             IsSaving = false;
 
             DesignName = string.Empty;
+
+            eventAggregator.GetEvent<MainTitleChangedEvent>().Publish(name);
         }).ObservesCanExecute(() => IsSaving);
-    }
 
-    private bool CanUse()
-    {
-        if (this.Datas.Count(d => d.Data.Type == ChessType.帥) != 2)
+        this.ToggleRecordCommand = new DelegateCommand(() =>
         {
-            this.PublishMsg("必须要设置将帅");
-            return false;
-        }
+            IsRecording = !IsRecording;
 
-        var enemyShuai = this.Datas.First(d => d.Data.Type == ChessType.帥 && d.Data.IsRed != this.IsRedTurn);
+            if (!IsRecording)
+            {
+                if (this.CommandStack.Count == 0)
+                {
+                    return;
+                }
 
-        if (enemyShuai.Data.IsDangerous(this._canPutVisitor, enemyShuai.Pos, out _) ||
-            _canPutVisitor.FaceToFace() ||
-            this.IsGameOver())
+                IEnumerable<string> steps = this.CommandStack.OrderBy(c => c.Index).Select(c => c.Notation);
+
+                _endGameModel.Steps = string.Join(',', steps);
+
+                configManager.WriteConfigNode<EndGameModel>(_endGameModel, ["EndGames", _endGameModel.Name]);
+
+                this.Log(this.Name, "结束记录行棋步骤", this.IsRedTurn);
+
+                if (!this.IsGameOver())
+                {
+                    this.Result = EnumGameResult.Deuce;
+                }
+            }
+            else
+            {
+                this.Log(this.Name, "开始记录行棋步骤", this.IsRedTurn);
+            }
+        });
+
+        bool CanUse()
         {
-            this.PublishMsg("不允许设计死局");
-            return false;
-        }
+            if (this.Datas.Count(d => d.Data.Type == ChessType.帥) != 2)
+            {
+                this.PublishMsg("必须要设置将帅");
+                return false;
+            }
 
-        return true;
+            var enemyShuai = this.Datas.First(d => d.Data.Type == ChessType.帥 && d.Data.IsRed != this.IsRedTurn);
+
+            if (enemyShuai.Data.IsDangerous(this._canPutVisitor, enemyShuai.Pos, out _) ||
+                _canPutVisitor.FaceToFace() ||
+                this.IsGameOver())
+            {
+                this.PublishMsg("不允许设计死局");
+                return false;
+            }
+
+            return true;
+        }
     }
 
     public void ReturnData(ChinChessModel chinChessModel)
@@ -145,39 +187,111 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
 
     protected override void InitDatas()
     {
-        TemplateDatas.Clear();
-
-        TemplateDatas.Add(new CustomChess(ChessType.車, true, 2));
-        TemplateDatas.Add(new CustomChess(ChessType.馬, true, 2));
-        TemplateDatas.Add(new CustomChess(ChessType.相, true, 2));
-        TemplateDatas.Add(new CustomChess(ChessType.仕, true, 2));
-        TemplateDatas.Add(new CustomChess(ChessType.帥, true, 1));
-        TemplateDatas.Add(new CustomChess(ChessType.炮, true, 2));
-        TemplateDatas.Add(new CustomChess(ChessType.兵, true, 5));
-
-        TemplateDatas.Add(new CustomChess(ChessType.車, false, 2));
-        TemplateDatas.Add(new CustomChess(ChessType.馬, false, 2));
-        TemplateDatas.Add(new CustomChess(ChessType.相, false, 2));
-        TemplateDatas.Add(new CustomChess(ChessType.仕, false, 2));
-        TemplateDatas.Add(new CustomChess(ChessType.帥, false, 1));
-        TemplateDatas.Add(new CustomChess(ChessType.炮, false, 2));
-        TemplateDatas.Add(new CustomChess(ChessType.兵, false, 5));
-
         foreach (var item in this.Datas)
         {
             item.Dispose();
         }
         this.Datas.Clear();
 
-        for (int i = 0; i < 10; i++)
+        for (int row = 0; row < 10; row++)
         {
-            for (int j = 0; j < 9; j++)
+            for (int column = 0; column < 9; column++)
             {
-                this.Datas.Add(new ChinChessModel(i, j));
+                this.Datas.Add(new ChinChessModel(row, column));
             }
         }
 
+        if (_endGameModel.IsNotNullAnd(_ => !_.Datas.IsNullOrBlank()))
+        {
+            var list = ChinChessSerializer.Deserialize(_endGameModel.Datas);
+
+            foreach (var item in list)
+            {
+                this.Datas[item.Pos.Index].Reload(item);
+            }
+        }
+
+        TemplateDatas.Clear();
+
+        // 计算扣除已存在棋子后的模板数据
+        var templateDataList = CalculateTemplateDatas();
+        foreach (var templateData in templateDataList)
+        {
+            TemplateDatas.Add(templateData);
+        }
+
         IsCustomOver = false;
+    }
+
+    /// <summary>
+    /// 计算扣除已存在棋子后的模板数据
+    /// </summary>
+    /// <returns>扣除后的棋子模板列表</returns>
+    private List<CustomChess> CalculateTemplateDatas()
+    {
+        // 定义每种棋子的默认数量
+        var defaultCounts = new Dictionary<(ChessType, bool), int>
+        {
+            { (ChessType.車, true), 2 },
+            { (ChessType.馬, true), 2 },
+            { (ChessType.相, true), 2 },
+            { (ChessType.仕, true), 2 },
+            { (ChessType.帥, true), 1 },
+            { (ChessType.炮, true), 2 },
+            { (ChessType.兵, true), 5 },
+            { (ChessType.車, false), 2 },
+            { (ChessType.馬, false), 2 },
+            { (ChessType.相, false), 2 },
+            { (ChessType.仕, false), 2 },
+            { (ChessType.帥, false), 1 },
+            { (ChessType.炮, false), 2 },
+            { (ChessType.兵, false), 5 }
+        };
+
+        // 统计棋盘上已存在的棋子数量
+        var existingCounts = new Dictionary<(ChessType, bool), int>();
+
+        // 初始化计数器
+        foreach (var key in defaultCounts.Keys)
+        {
+            existingCounts[key] = 0;
+        }
+
+        // 统计棋盘上已存在的棋子
+        foreach (var data in this.Datas)
+        {
+            if (!data.Data.IsEmpty)
+            {
+                var key = ((ChessType)data.Data.Type, (bool)data.Data.IsRed);
+
+                if (existingCounts.ContainsKey(key))
+                {
+                    existingCounts[key]++;
+                }
+            }
+        }
+
+        // 计算并返回TemplateDatas（默认数量 - 已存在数量）
+        var result = new List<CustomChess>();
+        foreach (var (key, defaultCount) in defaultCounts)
+        {
+            var existingCount = existingCounts[key];
+            var remainingCount = Math.Max(0, defaultCount - existingCount);
+
+            if (remainingCount > 0)
+            {
+                result.Add(new CustomChess(key.Item1, key.Item2, remainingCount));
+            }
+        }
+
+        return result;
+    }
+
+    protected override void RePlay_CommandExecute()
+    {
+        base.RePlay_CommandExecute();
+
+        this._eventAggregator.GetEvent<MainTitleChangedEvent>().Publish(this.Title);
     }
 
     private bool _isCustomOver;
@@ -195,6 +309,13 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
         set => SetProperty<bool>(ref _isSaving, value);
     }
 
+    private bool _isRecording;
+    public bool IsRecording
+    {
+        get => _isRecording;
+        private set => SetProperty<bool>(ref _isRecording, value);
+    }
+
     private string _designName;
     public string DesignName
     {
@@ -202,14 +323,46 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
         set => SetProperty<string>(ref _designName, value);
     }
 
+    private Lazy<IList<string>> _steps = new Lazy<IList<string>>(() => new List<string>());
+
     public ICommand CustomOverCommand { get; private set; }
     public ICommand SaveDesignCommand { get; private set; }
+    public ICommand ToggleRecordCommand { get; private set; }
+
+    public override void OnNavigatedTo(NavigationContext navigationContext)
+    {
+        base.OnNavigatedTo(navigationContext);
+
+        var parameters = navigationContext.Parameters;
+
+        if (parameters.TryGetValue<EndGameModel>("EndGame", out EndGameModel data))
+        {
+            _endGameModel = data;
+
+            foreach (var item in this.Datas)
+            {
+                item.Dispose();
+            }
+
+            this.Datas.Clear();
+
+            this.InitDatas();
+
+            this.CustomOverCommand.Execute(null);
+        }
+    }
 
     protected override void DisposeCore()
     {
         base.DisposeCore();
 
         this.CustomOverCommand = null;
+        this.SaveDesignCommand = null;
+        this.ToggleRecordCommand = null;
+
+        this._endGameModel = null;
+
+        this._eventAggregator = null;
 
         this.TemplateDatas.Clear();
         this.TemplateDatas = null;

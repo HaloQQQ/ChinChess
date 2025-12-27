@@ -23,6 +23,9 @@ namespace ChinChessCore.Models
         OfflineCustom,
 
         [Description("残局挑战")]
-        OfflineEndGames
+        OfflineEndGames,
+
+        [Description("残局解法")]
+        OfflineAnswer,
     }
 }

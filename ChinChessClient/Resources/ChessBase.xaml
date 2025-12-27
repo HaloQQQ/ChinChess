@@ -1,7 +1,7 @@
 ﻿<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:contracts="clr-namespace:ChinChessClient.Contracts">
+    xmlns:contracts="clr-namespace:ChinChessCore.Contracts;assembly=ChinChessCore">
     <Style
         x:Key="FunctionButton"
         BasedOn="{StaticResource ButtonBase_Icon_ScaleDown_Big_SkyBlue}"
@@ -46,7 +46,7 @@
         <Setter Property="Visibility" Value="Visible" />
 
         <Style.Triggers>
-            <DataTrigger Binding="{Binding Status}" Value="{x:Static contracts:GameStatus.Ready}">
+            <DataTrigger Binding="{Binding Status}" Value="{x:Static contracts:EnumGameStatus.Ready}">
                 <Setter Property="Visibility" Value="Collapsed" />
             </DataTrigger>
         </Style.Triggers>

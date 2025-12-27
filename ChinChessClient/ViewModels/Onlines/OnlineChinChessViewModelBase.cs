@@ -1,5 +1,4 @@
-﻿using ChinChessClient.Contracts;
-using ChinChessCore.Models;
+﻿using ChinChessCore.Models;
 using IceTea.Pure.Contracts;
 using IceTea.Pure.Extensions;
 using IceTea.Atom.Extensions;
@@ -8,7 +7,6 @@ using Microsoft.AspNetCore.SignalR.Client;
 using System.Windows;
 using System.Windows.Input;
 using Prism.Commands;
-using ChinChessClient.Models;
 using DryIoc;
 using Prism.Ioc;
 using Prism.Regions;
@@ -16,6 +14,7 @@ using IceTea.Pure.Utils;
 using IceTea.Wpf.Atom.Utils;
 using System.Net.Http;
 using System.ComponentModel;
+using ChinChessCore.Contracts;
 
 #pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
 #pragma warning disable CS8602 // 解引用可能出现空引用。
@@ -33,25 +32,25 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
 
     protected override string Name => this.IsRedRole == true ? "红色" : "黑色";
 
-    protected virtual bool IsTurnToDo => this.Status == GameStatus.Ready && this.IsRedTurn == this.IsRedRole;
+    protected virtual bool IsTurnToDo => this.Status == EnumGameStatus.Ready && this.IsRedTurn == this.IsRedRole;
 
     public OnlineChinChessViewModelBase(IAppConfigFileHotKeyManager appCfgHotKeyManager, IConfigManager configManager) : base(appCfgHotKeyManager)
     {
         try
         {
-            this.Status = GameStatus.NotInitialized;
+            this.Status = EnumGameStatus.NotInitialized;
 
             this.InitSignalR(configManager);
 
             HeQiCommand = new DelegateCommand(
                 HeQi_CommandExecute,
-                () => this.Status == GameStatus.Ready
+                () => this.Status == EnumGameStatus.Ready
                 )
                 .ObservesProperty(() => this.Status);
 
             GiveUpCommand = new DelegateCommand(
                 GiveUp_CommandExecute,
-                () => this.Status == GameStatus.Ready
+                () => this.Status == EnumGameStatus.Ready
                 )
                 .ObservesProperty(() => this.Status);
         }
@@ -76,7 +75,7 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
         _signalr.On("RecvHeQiReq", () =>
         {
             var tempStatus = this.Status;
-            this._status = GameStatus.NotReady;
+            this._status = EnumGameStatus.NotReady;
             RaisePropertyChanged(nameof(Status));
 
             var result = MessageBox.Show("对方请求和棋，是否同意？", "和棋", MessageBoxButton.YesNo);
@@ -89,7 +88,7 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
 
             if (allowHeQi)
             {
-                this.Status = GameStatus.Stoped;
+                this.Result = EnumGameResult.Deuce;
             }
             else
             {
@@ -107,14 +106,14 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
             this.PublishMsg(msg);
             this.Log(this.Name, msg, this.IsRedRole == true);
 
-            this.Status = GameStatus.Stoped;
+            this.Result = EnumGameResult.VictoryOrDefeat;
         });
 
 
         _signalr.On("RecvRevokeReq", () =>
         {
             var tempStatus = this.Status;
-            this._status = GameStatus.NotReady;
+            this._status = EnumGameStatus.NotReady;
             RaisePropertyChanged(nameof(Status));
 
             var result = MessageBox.Show("对方请求悔棋，是否同意？", "悔棋", MessageBoxButton.YesNo);
@@ -142,7 +141,7 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
         _signalr.On("RecvReplayReq", () =>
         {
             var tempStatus = this.Status;
-            this._status = GameStatus.NotReady;
+            this._status = EnumGameStatus.NotReady;
             RaisePropertyChanged(nameof(Status));
 
             var result = MessageBox.Show("对方请求重玩，是否同意？", "重玩", MessageBoxButton.YesNo);
@@ -178,7 +177,7 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
         // 注册接收消息的方法
         _signalr.On<string>("ReceiveMove", info =>
         {
-            var chessInfo = info.DeserializeObject<ChessInfo>();
+            var chessInfo = info.DeserializeObject<MoveInfo>();
 
             if (chessInfo.From == chessInfo.To)
             {
@@ -293,14 +292,14 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
     private async void HeQi_CommandExecute()
     {
         var tempStatus = this.Status;
-        this._status = GameStatus.NotReady;
+        this._status = EnumGameStatus.NotReady;
         RaisePropertyChanged(nameof(Status));
 
         bool allowGiveUp = await _signalr.InvokeAsync<bool>("RequestHeQi");
 
         if (allowGiveUp)
         {
-            this.Status = GameStatus.Stoped;
+            this.Result = EnumGameResult.VictoryOrDefeat;
         }
         else
         {
@@ -318,7 +317,7 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
     {
         _signalr.InvokeAsync("InformGiveUp");
 
-        this.Status = GameStatus.Stoped;
+        this.Result = EnumGameResult.VictoryOrDefeat;
 
         var msg = "已认输";
         this.PublishMsg(msg);
@@ -328,13 +327,13 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
     }
 
     #region override
-    protected override void OnGameStatusChanged(GameStatus newStatus)
+    protected override void OnGameStatusChanged(EnumGameStatus newStatus)
     {
         base.OnGameStatusChanged(newStatus);
 
         switch (newStatus)
         {
-            case GameStatus.Ready:
+            case EnumGameStatus.Ready:
                 this.Angle = this.IsRedRole == false ? 180 : 0;
 
                 this.RedSeconds = this.BlackSeconds = Seconds;
@@ -345,11 +344,11 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
         }
     }
 
-    protected override void SelectOrPut_CommandExecute(ChinChessModel model)
+    protected override bool SelectOrPut_CommandExecute(ChinChessModel model)
     {
         if (!this.SelectOrPut_CommandExecuteCore(model))
         {
-            return;
+            return false;
         }
 
         var targetIsEmpty = model.Data.IsEmpty;
@@ -367,7 +366,7 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
                 {
                     this.Log(this.Name, $"选中{model.Pos}", this.IsRedRole == true);
 
-                    _signalr.InvokeAsync("Move", new ChessInfo
+                    _signalr.InvokeAsync("Move", new MoveInfo
                     {
                         FromRed = this.IsRedRole == true,
                         From = CurrentChess.Pos,
@@ -376,7 +375,7 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
                 }
             }
 
-            return;
+            return true;
         }
 
         // 移动棋子到这里 或 吃子
@@ -387,7 +386,7 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
                 var action = targetIsEmpty ? "移动" : "吃子";
                 this.Log(this.Name, $"{action}{CurrentChess.Pos}=>{model.Pos}", this.IsRedRole == true);
 
-                _signalr.InvokeAsync("Move", new ChessInfo
+                _signalr.InvokeAsync("Move", new MoveInfo
                 {
                     FromRed = this.IsRedRole == true,
                     From = CurrentChess.Pos,
@@ -413,13 +412,17 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
             {
                 this.IsRedTurn = !IsRedTurn;
             }
+
+            return true;
         }
+
+        return false;
     }
 
     protected override async void Revoke_CommandExecute()
     {
         var tempStatus = this.Status;
-        this._status = GameStatus.NotReady;
+        this._status = EnumGameStatus.NotReady;
         RaisePropertyChanged(nameof(Status));
 
         bool allowRevoke = await _signalr.InvokeAsync<bool>("RequestRevoke");
@@ -446,7 +449,7 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
     protected override async void RePlay_CommandExecute()
     {
         var tempStatus = this.Status;
-        this._status = GameStatus.NotReady;
+        this._status = EnumGameStatus.NotReady;
         RaisePropertyChanged(nameof(Status));
 
         bool allowReplay = await _signalr.InvokeAsync<bool>("RequestReplay");
@@ -486,7 +489,7 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
                 }
                 else
                 {
-                    this.Status = GameStatus.NotInitialized;
+                    this.Status = EnumGameStatus.NotInitialized;
                 }
             }
         }

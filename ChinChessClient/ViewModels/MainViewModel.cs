@@ -1,4 +1,4 @@
-﻿using ChinChessClient.Contracts;
+using ChinChessClient.Contracts;
 using ChinChessClient.Contracts.Events;
 using ChinChessClient.Views;
 using IceTea.Pure.BaseModels;

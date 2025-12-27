@@ -1,0 +1,43 @@
+﻿<UserControl
+    x:Class="ChinChessClient.UserControls.RecordCtrl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="clr-namespace:ChinChessClient.Models">
+    <Border
+        Margin="5"
+        Background="#88CCCCCC"
+        CornerRadius="10">
+        <ListBox
+            VerticalAlignment="Bottom"
+            HorizontalContentAlignment="Left"
+            FontSize="16"
+            ItemsSource="{Binding Records}"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+            VirtualizingPanel.IsVirtualizing="True">
+            <ListBox.Resources>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="Black" />
+
+                    <Setter Property="TextWrapping" Value="Wrap" />
+
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsRed}" Value="True">
+                            <Setter Property="Foreground" Value="Red" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ListBox.Resources>
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type models:Record}">
+                    <TextBlock Margin="0,3" Style="{StaticResource {x:Type TextBlock}}">
+                        <TextBlock Text="{Binding Id}" />
+                        )
+                        <TextBlock Text="{Binding Time, StringFormat='MM-dd HH:mm:ss'}" />
+                        <TextBlock Text="{Binding Name}" />
+                        <TextBlock Style="{StaticResource {x:Type TextBlock}}" Text="{Binding Action}" />
+                    </TextBlock>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Border>
+</UserControl>

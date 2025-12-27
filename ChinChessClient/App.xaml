@@ -9,6 +9,8 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/IceTea.Wpf.Core;component/Resources/All.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <FontFamily x:Key="Iconfont">/Resources/#iconfont</FontFamily>
         </ResourceDictionary>
     </Application.Resources>
 </prism:PrismApplication>

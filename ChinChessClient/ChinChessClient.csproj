@@ -51,7 +51,6 @@
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <ProjectReference Include="..\..\IceTea\IceTea.Wpf.Core\IceTea.Wpf.Core.csproj" />
     <ProjectReference Include="..\ChinChessServer\ChinChessServer.csproj" />
     <Resource Include="Resources\iconfont.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

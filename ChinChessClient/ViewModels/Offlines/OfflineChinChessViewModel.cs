@@ -1,6 +1,4 @@
-﻿using ChinChessClient.Contracts;
-using ChinChessClient.Models;
-using ChinChessCore.Contracts;
+﻿using ChinChessCore.Contracts;
 using ChinChessCore.Models;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
 using Prism.Regions;
@@ -20,7 +18,7 @@ internal class OfflineChinChessViewModel : OfflineChinChessViewModelBase
     public OfflineChinChessViewModel(IAppConfigFileHotKeyManager appCfgHotKeyManager)
         : base(appCfgHotKeyManager)
     {
-        this.Status = GameStatus.Ready;
+        this.Status = EnumGameStatus.Ready;
     }
 
     protected override void InitDatas()
@@ -56,7 +54,7 @@ internal class OfflineChinChessViewModel : OfflineChinChessViewModelBase
 
             this.Datas.Clear();
 
-            var list = ChinChessSerializer.Deserialize(data.Data);
+            var list = ChinChessSerializer.Deserialize(data.Datas);
 
             for (int row = 0; row < 10; row++)
             {

@@ -3,10 +3,10 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
-    xmlns:chinesechess="clr-namespace:ChinChessClient.Commands"
-    xmlns:contracts="clr-namespace:ChinChessClient.Contracts"
-    xmlns:models="clr-namespace:ChinChessClient.Models"
+    xmlns:contracts="clr-namespace:ChinChessCore.Contracts;assembly=ChinChessCore"
+    xmlns:coreModels="clr-namespace:ChinChessCore.Models;assembly=ChinChessCore"
     xmlns:prism="http://prismlibrary.com/"
+    xmlns:usercontrols="clr-namespace:ChinChessClient.UserControls"
     prism:ViewModelLocator.AutoWireViewModel="True">
     <UserControl.Resources>
         <ResourceDictionary Source="/ChinChessClient;component/Resources/ChineseChess.xaml" />
@@ -36,44 +36,7 @@
             <ColumnDefinition Width="3*" />
         </Grid.ColumnDefinitions>
 
-        <Border
-            Grid.Column="0"
-            Margin="5"
-            Background="#88CCCCCC"
-            CornerRadius="10">
-            <ListBox
-                VerticalAlignment="Bottom"
-                HorizontalContentAlignment="Left"
-                FontSize="16"
-                ItemsSource="{Binding Records}"
-                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                VirtualizingPanel.IsVirtualizing="True">
-                <ListBox.Resources>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Foreground" Value="Black" />
-
-                        <Setter Property="TextWrapping" Value="Wrap" />
-
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsRed}" Value="True">
-                                <Setter Property="Foreground" Value="Red" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </ListBox.Resources>
-                <ListBox.ItemTemplate>
-                    <DataTemplate DataType="{x:Type models:Record}">
-                        <TextBlock Margin="0,3" Style="{StaticResource {x:Type TextBlock}}">
-                            <TextBlock Text="{Binding Id}" />
-                            )
-                            <TextBlock Text="{Binding Time, StringFormat='MM-dd HH:mm:ss'}" />
-                            <TextBlock Text="{Binding Name}" />
-                            <TextBlock Style="{StaticResource {x:Type TextBlock}}" Text="{Binding Action}" />
-                        </TextBlock>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </Border>
+        <usercontrols:RecordCtrl Grid.Column="0" />
 
         <Viewbox
             Grid.Column="1"
@@ -188,13 +151,29 @@
                             <Button Style="{StaticResource RePlayButton}" />
 
                             <Button Style="{StaticResource CancelLastButton}" />
+
+                            <Button Command="{Binding ToggleRecordCommand}" ToolTip="记录步骤">
+                                <Button.Style>
+                                    <Style BasedOn="{StaticResource FunctionButton}" TargetType="Button">
+                                        <Setter Property="FontFamily" Value="{StaticResource Iconfont}" />
+
+                                        <Setter Property="Content" Value="&#xe64d;" />
+
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                                                <Setter Property="Content" Value="&#xe615;" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </WrapPanel>
                     </DockPanel>
 
                     <Grid Visibility="{Binding IsCustomOver, Converter={StaticResource BoolToCollapsedVisibleConverter}}">
                         <ListBox Background="LightBlue" ItemsSource="{Binding TemplateDatas}">
                             <ListBox.ItemTemplate>
-                                <DataTemplate DataType="{x:Type models:CustomChess}">
+                                <DataTemplate DataType="{x:Type coreModels:CustomChess}">
                                     <Grid>
                                         <Image
                                             Width="75"
@@ -253,43 +232,64 @@
                                 ToolTip="设计完成" />
 
                             <ToggleButton
-                                Content="&#xe64d;"
+                                Content="&#xe654;"
                                 FontSize="30"
                                 IsChecked="{Binding IsSaving}"
                                 IsEnabled="{Binding IsSaving, Converter={StaticResource OppositeBoolConverter}}"
                                 Style="{StaticResource ButtonBase_Icon_ScaleDown_Small_HoverBlue}"
-                                ToolTip="保存残局" />
+                                ToolTip="保存布局" />
                             <Popup
                                 IsOpen="{Binding IsSaving}"
                                 Placement="Center"
                                 PlacementTarget="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                                 StaysOpen="True">
-                                <Border Background="{StaticResource PopupBackground}" CornerRadius="10">
-                                    <Grid>
-                                        <TextBox
-                                            Width="400"
-                                            Height="80"
-                                            Margin="50"
-                                            FontSize="30"
-                                            MyAttachProperty.Command="{Binding SaveDesignCommand}"
-                                            MyAttachProperty.CommandParameter="{Binding DesignName}"
-                                            MyAttachProperty.DoubleValue="35"
-                                            MyAttachProperty.IconFontText="&#xe64f;"
-                                            MyAttachProperty.PlaceHolder="残局名"
-                                            Style="{StaticResource TextBox_PlaceHolderAsLable_Execute}"
-                                            Text="{Binding DesignName, UpdateSourceTrigger=PropertyChanged, Delay=50}" />
+                                <Grid>
+                                    <Border
+                                        Width="600"
+                                        Height="300"
+                                        Background="{StaticResource PopupBackground}"
+                                        CornerRadius="20">
+                                        <StackPanel>
+                                            <!--<TextBox
+                                                Width="400"
+                                                Height="80"
+                                                FontSize="35"
+                                                MyAttachProperty.IsCollapsed="True"
+                                                MyAttachProperty.PlaceHolder="步骤"
+                                                Style="{StaticResource TextBox_PlaceHolderAsLable_Execute}"
+                                                Text="{Binding Steps, UpdateSourceTrigger=PropertyChanged, Delay=50}" />-->
 
-                                        <ToggleButton
-                                            Padding="3"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Top"
-                                            Content="&#xe624;"
-                                            FontSize="25"
-                                            IsChecked="{Binding IsSaving}"
-                                            Style="{StaticResource ButtonBase_Icon_ScaleUp_Small_HoverBlue}"
-                                            ToolTip="取消" />
-                                    </Grid>
-                                </Border>
+                                            <TextBox
+                                                Width="400"
+                                                Height="80"
+                                                FontSize="35"
+                                                MyAttachProperty.Command="{Binding SaveDesignCommand}"
+                                                MyAttachProperty.CommandParameter="{Binding DesignName}"
+                                                MyAttachProperty.DoubleValue="35"
+                                                MyAttachProperty.IconFontText="&#xe64f;"
+                                                MyAttachProperty.PlaceHolder="残局名"
+                                                Style="{StaticResource TextBox_PlaceHolderAsLable_Execute}"
+                                                Text="{Binding DesignName, UpdateSourceTrigger=PropertyChanged, Delay=50}">
+                                                <TextBox.InputBindings>
+                                                    <KeyBinding
+                                                        Key="Return"
+                                                        Command="{Binding SaveDesignCommand}"
+                                                        CommandParameter="{Binding DesignName}" />
+                                                </TextBox.InputBindings>
+                                            </TextBox>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <ToggleButton
+                                        Padding="8"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Top"
+                                        Content="&#xe624;"
+                                        FontSize="25"
+                                        IsChecked="{Binding IsSaving}"
+                                        Style="{StaticResource ButtonBase_Icon_ScaleUp_Small_HoverBlue}"
+                                        ToolTip="取消" />
+                                </Grid>
                             </Popup>
                         </StackPanel>
                     </Grid>
@@ -326,7 +326,7 @@
                         <Grid.Style>
                             <Style BasedOn="{StaticResource Element_Visible}" TargetType="Grid">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static contracts:GameStatus.NotInitialized}">
+                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static contracts:EnumGameStatus.NotInitialized}">
                                         <Setter Property="Visibility" Value="Collapsed" />
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -341,48 +341,7 @@
             </StackPanel>
         </Viewbox>
 
-        <Border
-            Grid.Column="2"
-            Margin="5"
-            Background="#88CCCCCC"
-            CornerRadius="10">
-            <ListBox
-                VerticalAlignment="Bottom"
-                HorizontalContentAlignment="Left"
-                FontSize="30"
-                ItemsSource="{Binding CommandStack}"
-                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                VirtualizingPanel.IsVirtualizing="True">
-                <ListBox.Resources>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Foreground" Value="Black" />
-
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsRed}" Value="True">
-                                <Setter Property="Foreground" Value="Red" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </ListBox.Resources>
-                <ListBox.ItemTemplate>
-                    <DataTemplate DataType="{x:Type chinesechess:MoveCommand}">
-                        <TextBlock Style="{StaticResource {x:Type TextBlock}}">
-                            <TextBlock Text="{Binding Index}" />
-                            ]
-                            (
-                            <TextBlock Text="{Binding From.Row}" />
-                            ,
-                            <TextBlock Text="{Binding From.Column}" />
-                            ) => (
-                            <TextBlock Text="{Binding To.Row}" />
-                            ,
-                            <TextBlock Text="{Binding To.Column}" />
-                            )
-                        </TextBlock>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </Border>
+        <usercontrols:MovePahtCtrl Grid.Column="2" />
 
         <DialogMessagePopup />
     </Grid>

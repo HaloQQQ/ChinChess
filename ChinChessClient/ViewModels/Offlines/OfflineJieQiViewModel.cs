@@ -1,6 +1,5 @@
-﻿using ChinChessClient.Commands;
-using ChinChessClient.Contracts;
-using ChinChessClient.Models;
+﻿using ChinChessCore.Commands;
+using ChinChessCore.Contracts;
 using ChinChessCore.Models;
 using IceTea.Pure.Extensions;
 using IceTea.Pure.Utils;
@@ -18,7 +17,7 @@ internal class OfflineJieQiViewModel : OfflineChinChessViewModelBase
     public OfflineJieQiViewModel(IAppConfigFileHotKeyManager appCfgHotKeyManager)
         : base(appCfgHotKeyManager)
     {
-        this.Status = GameStatus.Ready;
+        this.Status = EnumGameStatus.Ready;
     }
 
     protected override bool PushDead(InnerChinChess chess)
@@ -200,16 +199,16 @@ internal class OfflineJieQiViewModel : OfflineChinChessViewModelBase
         }
     }
 
-    protected override void OnGameStatusChanged(GameStatus newStatus)
+    protected override void OnGameStatusChanged(EnumGameStatus newStatus)
     {
         base.OnGameStatusChanged(newStatus);
 
         switch (newStatus)
         {
-            case GameStatus.Ready:
+            case EnumGameStatus.Ready:
                 this.InitJieQiData();
                 break;
-            case GameStatus.Stoped:
+            case EnumGameStatus.Stoped:
                 foreach (var item in this.Datas.Where(d => d.Data.IsBack))
                 {
                     item.Data.HasNotUsed = true;

@@ -2,9 +2,9 @@
     x:Class="ChinChessClient.Views.OnlineChinChessView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:chinesechess="clr-namespace:ChinChessClient.Commands"
-    xmlns:models="clr-namespace:ChinChessClient.Models"
+    xmlns:chinesechess="clr-namespace:ChinChessCore.Commands;assembly=ChinChessCore"
     xmlns:prism="http://prismlibrary.com/"
+    xmlns:usercontrols="clr-namespace:ChinChessClient.UserControls"
     prism:ViewModelLocator.AutoWireViewModel="True"
     MyAttachProperty.IsElementFocused="True">
 
@@ -51,44 +51,7 @@
             <ColumnDefinition Width="3*" />
         </Grid.ColumnDefinitions>
 
-        <Border
-            Grid.Column="0"
-            Margin="5"
-            Background="#88CCCCCC"
-            CornerRadius="10">
-            <ListBox
-                VerticalAlignment="Bottom"
-                HorizontalContentAlignment="Left"
-                FontSize="16"
-                ItemsSource="{Binding Records}"
-                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                VirtualizingPanel.IsVirtualizing="True">
-                <ListBox.Resources>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Foreground" Value="Black" />
-
-                        <Setter Property="TextWrapping" Value="Wrap" />
-
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsRed}" Value="True">
-                                <Setter Property="Foreground" Value="Red" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </ListBox.Resources>
-                <ListBox.ItemTemplate>
-                    <DataTemplate DataType="{x:Type models:Record}">
-                        <TextBlock Margin="0,3" Style="{StaticResource {x:Type TextBlock}}">
-                            <TextBlock Text="{Binding Id}" />
-                            )
-                            <TextBlock Text="{Binding Time, StringFormat='MM-dd HH:mm:ss'}" />
-                            <TextBlock Text="{Binding Name}" />
-                            <TextBlock Style="{StaticResource {x:Type TextBlock}}" Text="{Binding Action}" />
-                        </TextBlock>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </Border>
+        <usercontrols:RecordCtrl Grid.Column="0" />
 
         <Viewbox
             Grid.Column="1"
@@ -280,48 +243,7 @@
             </StackPanel>
         </Viewbox>
 
-        <Border
-            Grid.Column="2"
-            Margin="5"
-            Background="#88CCCCCC"
-            CornerRadius="10">
-            <ListBox
-                VerticalAlignment="Bottom"
-                HorizontalContentAlignment="Left"
-                FontSize="30"
-                ItemsSource="{Binding CommandStack}"
-                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                VirtualizingPanel.IsVirtualizing="True">
-                <ListBox.Resources>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Foreground" Value="Black" />
-
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsRed}" Value="True">
-                                <Setter Property="Foreground" Value="Red" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </ListBox.Resources>
-                <ListBox.ItemTemplate>
-                    <DataTemplate DataType="{x:Type chinesechess:MoveCommand}">
-                        <TextBlock Style="{StaticResource {x:Type TextBlock}}">
-                            <TextBlock Text="{Binding Index}" />
-                            ]
-                            (
-                            <TextBlock Text="{Binding From.Row}" />
-                            ,
-                            <TextBlock Text="{Binding From.Column}" />
-                            ) => (
-                            <TextBlock Text="{Binding To.Row}" />
-                            ,
-                            <TextBlock Text="{Binding To.Column}" />
-                            )
-                        </TextBlock>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </Border>
+        <usercontrols:MovePahtCtrl Grid.Column="2" />
 
         <DialogMessagePopup />
     </Grid>

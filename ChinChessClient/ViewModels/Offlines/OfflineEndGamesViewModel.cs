@@ -1,8 +1,8 @@
 ﻿using ChinChessClient.Contracts.Events;
 using ChinChessClient.ViewModels.Contracts;
+using ChinChessCore.Models;
 using IceTea.Pure.Contracts;
 using IceTea.Pure.Extensions;
-using IceTea.Pure.Utils;
 using Prism.Commands;
 using Prism.Events;
 using Prism.Regions;
@@ -20,15 +20,16 @@ internal class OfflineEndGamesViewModel : NavigateViewModelBase
 
     public OfflineEndGamesViewModel(IConfigManager configManager, IRegionManager regionManager, IEventAggregator eventAggregator)
     {
-        var endGames = configManager.ReadConfigNode<IDictionary<string, string>>("EndGames".FillToArray(), new Dictionary<string, string>());
+        var endGames = configManager.ReadConfigNode<IDictionary<string, EndGameModel>>("EndGames".FillToArray(), new Dictionary<string, EndGameModel>());
 
         foreach (var game in endGames)
         {
-            _games.Add(new EndGameModel(game.Key, game.Value));
+            game.Value.Name = game.Key;
+            _games.Add(game.Value);
         }
 
         this.GoToPlayManualCommand = new DelegateCommand<EndGameModel>(
-            model => regionManager.RequestNavigate("ChinChessRegion", "Offline",
+            model => regionManager.RequestNavigate("ChinChessRegion", "OfflineCustom",
             nr => eventAggregator.GetEvent<MainTitleChangedEvent>().Publish($"{this.Title}-{model.Name}"),
             new NavigationParameters()
             {
@@ -36,8 +37,8 @@ internal class OfflineEndGamesViewModel : NavigateViewModelBase
             })
         );
 
-        this.GoToPlayAutoCommand = new DelegateCommand<EndGameModel>(
-            model => regionManager.RequestNavigate("ChinChessRegion", "OfflineAuto",
+        this.GoToPlayAnswerCommand = new DelegateCommand<EndGameModel>(
+            model => regionManager.RequestNavigate("ChinChessRegion", "OfflineAnswer",
             nr => eventAggregator.GetEvent<MainTitleChangedEvent>().Publish($"{this.Title}-{model.Name}"),
             new NavigationParameters()
             {
@@ -57,7 +58,7 @@ internal class OfflineEndGamesViewModel : NavigateViewModelBase
     }
 
     public ICommand GoToPlayManualCommand { get; private set; }
-    public ICommand GoToPlayAutoCommand { get; private set; }
+    public ICommand GoToPlayAnswerCommand { get; private set; }
 
 
     protected override void DisposeCore()
@@ -68,18 +69,6 @@ internal class OfflineEndGamesViewModel : NavigateViewModelBase
         this._games = null;
 
         this.GoToPlayManualCommand = null;
-        this.GoToPlayAutoCommand = null;
+        this.GoToPlayAnswerCommand = null;
     }
-}
-
-internal class EndGameModel
-{
-    public EndGameModel(string name, string data)
-    {
-        Name = name.AssertArgumentNotNull(nameof(name));
-        Data = data.AssertArgumentNotNull(nameof(data));
-    }
-
-    public string Name { get; }
-    public string Data { get; }
 }

@@ -1,4 +1,4 @@
-﻿using ChinChessClient.AutomationEngines;
+﻿using ChinChessCore.AutomationEngines;
 using ChinChessClient.ViewModels;
 using ChinChessClient.Views;
 using IceTea.Pure.Contracts;
@@ -48,7 +48,8 @@ public partial class App : PrismApplication
 
         containerRegistry.RegisterForNavigation<OfflineCustomView>("OfflineCustom");
         containerRegistry.RegisterForNavigation<OfflineEndGamesView>("OfflineEndGames");
-        
+        containerRegistry.RegisterForNavigation<OfflineAnswerView>("OfflineAnswer");
+
 
         containerRegistry.RegisterSingleton<MainViewModel>();
 

@@ -1,0 +1,208 @@
+﻿<UserControl
+    x:Class="ChinChessClient.Views.OfflineAnswerView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:prism="http://prismlibrary.com/"
+    xmlns:usercontrols="clr-namespace:ChinChessClient.UserControls"
+    prism:ViewModelLocator.AutoWireViewModel="True"
+    MyAttachProperty.IsElementFocused="True">
+
+    <UserControl.Resources>
+        <ResourceDictionary Source="/ChinChessClient;component/Resources/ChineseChess.xaml" />
+    </UserControl.Resources>
+
+    <UserControl.InputBindings>
+        <KeyBinding
+            Key="{Binding KeyGestureDic[重玩].SelectedKey}"
+            Command="{Binding RePlayCommand}"
+            Modifiers="{Binding KeyGestureDic[重玩].ModifierKey}" />
+
+        <KeyBinding
+            Key="{Binding KeyGestureDic[悔棋].SelectedKey}"
+            Command="{Binding RevokeCommand}"
+            Modifiers="{Binding KeyGestureDic[悔棋].ModifierKey}" />
+
+        <KeyBinding
+            Key="{Binding KeyGestureDic[棋盘换向].SelectedKey}"
+            Command="{Binding SwitchDirectionCommand}"
+            Modifiers="{Binding KeyGestureDic[棋盘换向].ModifierKey}" />
+    </UserControl.InputBindings>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*" />
+            <ColumnDefinition Width="4*" />
+            <ColumnDefinition Width="3*" />
+        </Grid.ColumnDefinitions>
+
+        <usercontrols:RecordCtrl Grid.Column="0" />
+
+        <Viewbox
+            Grid.Column="1"
+            Margin="0,5"
+            VerticalAlignment="Top">
+            <StackPanel>
+                <DockPanel
+                    Height="80"
+                    Background="Red"
+                    DockPanel.Dock="Top">
+                    <StackPanel
+                        Background="#2874A6"
+                        DockPanel.Dock="Left"
+                        Orientation="Horizontal">
+
+                        <Image Margin="5" Source="../Resources/Images/默认头像.png" />
+
+                        <Ellipse x:Name="BlackUser" HorizontalAlignment="Left">
+                            <Ellipse.Fill>
+                                <ImageBrush ImageSource="../Resources/Pictures/黑将.png" />
+                            </Ellipse.Fill>
+                            <Ellipse.Style>
+                                <Style BasedOn="{StaticResource ChineseChess_Signal}" TargetType="Ellipse">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsRedTurn}" Value="True">
+                                            <Setter Property="Stroke" Value="Transparent" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <Popup
+                            MyAttachProperty.IsAppearOnHovered="True"
+                            Placement="Bottom"
+                            PlacementTarget="{Binding ElementName=BlackUser}">
+                            <Border
+                                MinHeight="100"
+                                Background="{StaticResource PopupBackground}"
+                                CornerRadius="10">
+                                <ListBox ItemTemplate="{StaticResource DeadChessDataTemplate}" ItemsSource="{Binding RedDeads}">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Width="330" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                </ListBox>
+                            </Border>
+                        </Popup>
+
+                        <TextBlock
+                            Margin="3"
+                            FontSize="20"
+                            Style="{StaticResource TextBlock_Theme}"
+                            Text="{Binding BlackTimeSpan, FallbackValue=00:00:00}" />
+                    </StackPanel>
+
+                    <StackPanel
+                        Background="#DC7633"
+                        DockPanel.Dock="Right"
+                        Orientation="Horizontal">
+                        <TextBlock
+                            Margin="3"
+                            FontSize="20"
+                            Style="{StaticResource TextBlock_Theme}"
+                            Text="{Binding RedTimeSpan, FallbackValue=00:00:00}" />
+
+                        <Ellipse
+                            x:Name="RedUser"
+                            Grid.Row="1"
+                            Grid.Column="0">
+                            <Ellipse.Fill>
+                                <ImageBrush ImageSource="../Resources/Pictures/红帅.png" />
+                            </Ellipse.Fill>
+                            <Ellipse.Style>
+                                <Style BasedOn="{StaticResource ChineseChess_Signal}" TargetType="Ellipse">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsRedTurn}" Value="False">
+                                            <Setter Property="Stroke" Value="Transparent" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <Popup
+                            MyAttachProperty.IsAppearOnHovered="True"
+                            Placement="Bottom"
+                            PlacementTarget="{Binding ElementName=RedUser}">
+                            <Border
+                                MinHeight="100"
+                                Background="{StaticResource PopupBackground}"
+                                CornerRadius="10">
+                                <ListBox ItemTemplate="{StaticResource DeadChessDataTemplate}" ItemsSource="{Binding BlackDeads}">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Width="330" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                </ListBox>
+                            </Border>
+                        </Popup>
+
+                        <Image Margin="5" Source="../Resources/Images/默认头像.png" />
+                    </StackPanel>
+
+                    <WrapPanel
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        DockPanel.Dock="Left">
+                        <Button Style="{StaticResource SwitchDirectionButton}" />
+
+                        <Button Style="{StaticResource RePlayButton}" />
+
+                        <Button Style="{StaticResource CancelLastButton}" />
+                    </WrapPanel>
+                </DockPanel>
+
+                <Grid Margin="0,5,0,0">
+                    <Image Style="{StaticResource Image_ChessBack}" />
+
+                    <ListBox
+                        Padding="11"
+                        ItemContainerStyle="{StaticResource ListBoxItem_General}"
+                        ItemTemplate="{StaticResource Chess}"
+                        ItemsSource="{Binding Datas}"
+                        RenderTransformOrigin="0.5,0.5">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="9" Rows="10" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.RenderTransform>
+                            <RotateTransform Angle="{Binding DataContext.Angle, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                        </ListBox.RenderTransform>
+                    </ListBox>
+
+                    <Grid Background="Transparent" />
+
+                    <Grid Background="#AA999999" Style="{StaticResource Element_Visible}">
+                        <Button
+                            FontSize="60"
+                            Foreground="Gray"
+                            Style="{StaticResource RePlayButton}" />
+                    </Grid>
+                </Grid>
+
+                <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                    <Button
+                        HorizontalAlignment="Center"
+                        Command="{Binding RevokeCommand}"
+                        Content="&#xe660;"
+                        FontSize="40"
+                        Style="{StaticResource ButtonBase_Icon_Conent_Transparent}"
+                        ToolTip="上一步" />
+
+                    <Button
+                        HorizontalAlignment="Center"
+                        Command="{Binding MoveCommand}"
+                        Content="&#xe65f;"
+                        FontSize="40"
+                        Style="{StaticResource ButtonBase_Icon_Conent_Transparent}"
+                        ToolTip="下一步" />
+                </StackPanel>
+            </StackPanel>
+        </Viewbox>
+
+        <usercontrols:MovePahtCtrl Grid.Column="2" />
+
+        <DialogMessagePopup />
+    </Grid>
+</UserControl>

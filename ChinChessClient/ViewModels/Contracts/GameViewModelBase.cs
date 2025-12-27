@@ -1,7 +1,7 @@
-﻿using ChinChessClient.Commands;
-using ChinChessClient.Contracts;
-using ChinChessClient.Models;
+﻿using ChinChessClient.Models;
 using ChinChessClient.ViewModels.Contracts;
+using ChinChessCore.Commands;
+using ChinChessCore.Contracts;
 using IceTea.Pure.BaseModels;
 using IceTea.Pure.Contracts;
 using IceTea.Pure.Extensions;
@@ -47,12 +47,12 @@ internal abstract class GameViewModelBase<T> : NavigateViewModelBase, IDialogMes
 
         this.RePlayCommand = new DelegateCommand(
             RePlay_CommandExecute,
-            () => Status != GameStatus.NotInitialized && Status != GameStatus.NotReady)
+            () => Status != EnumGameStatus.NotInitialized && Status != EnumGameStatus.NotReady)
         .ObservesProperty(() => Status);
 
         this.SwitchDirectionCommand = new DelegateCommand(
             () => Angle = Angle == 0 ? 180 : 0
-            , () => this.Status == GameStatus.Ready)
+            , () => this.Status == EnumGameStatus.Ready)
         .ObservesProperty(() => this.Status);
 
         _timer = new DispatcherTimer();
@@ -98,7 +98,7 @@ internal abstract class GameViewModelBase<T> : NavigateViewModelBase, IDialogMes
 
     protected virtual void RePlay_CommandExecute()
     {
-        this.Status = GameStatus.Ready;
+        this.Status = EnumGameStatus.Ready;
 
         this.Restart_Wav();
 
@@ -156,30 +156,59 @@ internal abstract class GameViewModelBase<T> : NavigateViewModelBase, IDialogMes
 
     public IList<Record> Records { get; private set; }
 
-    protected GameStatus _status;
-    public GameStatus Status
+    private EnumGameResult _result;
+    public EnumGameResult Result
+    {
+        get => _result;
+        protected set
+        {
+            if (_result != value)
+            {
+                _result = value;
+
+                if (_result == EnumGameResult.VictoryOrDefeat || _result == EnumGameResult.Deuce)
+                {
+                    this.Status = EnumGameStatus.Stoped;
+
+                    this.Over_Wav();
+
+                    if (_result == EnumGameResult.Deuce)
+                    {
+                        this.Log(this.Name, "棋局结束，和棋", this.IsRedTurn == true);
+                    }
+                }
+                else if (_result == EnumGameResult.During)
+                {
+                    this.Status = EnumGameStatus.Ready;
+                }
+            }
+        }
+    }
+
+    protected EnumGameStatus _status;
+    public EnumGameStatus Status
     {
         get => _status;
         protected set
         {
-            if (SetProperty<GameStatus>(ref _status, value) || value == GameStatus.Ready)
+            if (SetProperty<EnumGameStatus>(ref _status, value) || value == EnumGameStatus.Ready)
             {
                 OnGameStatusChanged(value);
             }
         }
     }
-    protected virtual void OnGameStatusChanged(GameStatus newStatus)
+    protected virtual void OnGameStatusChanged(EnumGameStatus newStatus)
     {
         switch (newStatus)
         {
-            case GameStatus.Ready:
+            case EnumGameStatus.Ready:
                 CurrentChess = null;
                 IsRedTurn = true;
 
                 this._timer.IsNotNullAnd(t => t.IsEnabled = true);
                 break;
-            case GameStatus.NotInitialized:
-            case GameStatus.Stoped:
+            case EnumGameStatus.NotInitialized:
+            case EnumGameStatus.Stoped:
                 this._timer.IsNotNullAnd(t => t.IsEnabled = false);
                 break;
             default:
@@ -271,7 +300,7 @@ internal abstract class GameViewModelBase<T> : NavigateViewModelBase, IDialogMes
     #region Commands
     public ICommand SelectOrPutCommand { get; protected set; }
 
-    protected abstract void SelectOrPut_CommandExecute(T model);
+    protected abstract bool SelectOrPut_CommandExecute(T model);
 
     public ICommand RevokeCommand { get; protected set; }
     protected virtual void Revoke_CommandExecute()
@@ -382,7 +411,7 @@ internal abstract class GameViewModelBase<T> : NavigateViewModelBase, IDialogMes
     {
         bool canNavigate = true;
 
-        if (this.Status == GameStatus.Ready)
+        if (this.Status == EnumGameStatus.Ready)
         {
             canNavigate = MessageBox.Show("游戏没结束，确定要离开？", "警告", MessageBoxButton.YesNo) == MessageBoxResult.Yes;
 
@@ -397,7 +426,7 @@ internal abstract class GameViewModelBase<T> : NavigateViewModelBase, IDialogMes
 
     public override void OnNavigatedFrom(NavigationContext navigationContext)
     {
-        if (this.Status != GameStatus.Ready)
+        if (this.Status != EnumGameStatus.Ready)
         {
             this.Dispose();
         }

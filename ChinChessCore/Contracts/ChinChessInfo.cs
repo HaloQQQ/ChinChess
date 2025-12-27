@@ -1,5 +1,6 @@
 ﻿using ChinChessCore.Models;
 using System;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 namespace ChinChessCore.Contracts
@@ -7,6 +8,7 @@ namespace ChinChessCore.Contracts
     /// <summary>
     /// A(a)57
     /// </summary>
+    [DebuggerDisplay("{IsRed}{ChessType}{Pos}")]
     public struct ChinChessInfo
     {
         public ChinChessInfo(Position pos, bool isRed, ChessType chessType)

@@ -1,5 +1,4 @@
-﻿using ChinChessClient.Contracts;
-using ChinChessClient.Models;
+﻿using ChinChessCore.Contracts;
 using ChinChessCore.Models;
 using IceTea.Pure.Contracts;
 using IceTea.Pure.Extensions;
@@ -37,8 +36,8 @@ internal class OnlineChinChessViewModel : OnlineChinChessViewModelBase, IBackup
         .ObservesProperty(() => this.CommandStack.Count);
 
         this.SelectOrPutCommand = new DelegateCommand<ChinChessModel>(
-            SelectOrPut_CommandExecute,
-            model => this.Status == GameStatus.Ready
+            model => SelectOrPut_CommandExecute(model),
+            model => this.Status == EnumGameStatus.Ready
                 && (this.IsMock || (!this.IsMock && this.IsRedTurn == this.IsRedRole))
                 && model != null && CurrentChess != model
         )
@@ -57,7 +56,7 @@ internal class OnlineChinChessViewModel : OnlineChinChessViewModelBase, IBackup
             {
                 this.Restore();
             }
-        }, () => this.Status == GameStatus.Ready && (this.IsMock || this.IsRedTurn == this.IsRedRole))
+        }, () => this.Status == EnumGameStatus.Ready && (this.IsMock || this.IsRedTurn == this.IsRedRole))
         .ObservesProperty(() => this.IsRedTurn)
         .ObservesProperty(() => this.IsMock)
         .ObservesProperty(() => this.Status);

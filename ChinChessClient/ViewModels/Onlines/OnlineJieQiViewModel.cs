@@ -1,6 +1,5 @@
-﻿using ChinChessClient.Commands;
-using ChinChessClient.Contracts;
-using ChinChessClient.Models;
+﻿using ChinChessCore.Commands;
+using ChinChessCore.Contracts;
 using ChinChessCore.Models;
 using IceTea.Pure.Contracts;
 using IceTea.Pure.Extensions;
@@ -59,7 +58,7 @@ internal class OnlineJieQiViewModel : OnlineChinChessViewModelBase
         .ObservesProperty(() => this.CommandStack.Count);
 
         this.SelectOrPutCommand = new DelegateCommand<ChinChessModel>(
-            SelectOrPut_CommandExecute,
+            model => SelectOrPut_CommandExecute(model),
             model => this.IsTurnToDo && model != null && CurrentChess != model
         )
         .ObservesProperty(() => this.Status)
@@ -218,13 +217,13 @@ internal class OnlineJieQiViewModel : OnlineChinChessViewModelBase
     }
     #endregion
 
-    protected override void OnGameStatusChanged(GameStatus newStatus)
+    protected override void OnGameStatusChanged(EnumGameStatus newStatus)
     {
         base.OnGameStatusChanged(newStatus);
 
         switch (newStatus)
         {
-            case GameStatus.Stoped:
+            case EnumGameStatus.Stoped:
                 foreach (var item in this.Datas.Where(d => d.Data.IsBack))
                 {
                     item.Data.HasNotUsed = true;

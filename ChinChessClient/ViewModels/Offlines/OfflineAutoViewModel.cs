@@ -1,7 +1,6 @@
-﻿using ChinChessClient.AutomationEngines;
-using ChinChessClient.Commands;
-using ChinChessClient.Contracts;
-using ChinChessClient.Models;
+﻿using ChinChessCore.AutomationEngines;
+using ChinChessCore.Commands;
+using ChinChessCore.Contracts;
 using ChinChessCore.Models;
 using IceTea.Pure.Extensions;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
@@ -20,7 +19,7 @@ internal class OfflineAutoViewModel : OfflineChinChessViewModel
     public OfflineAutoViewModel(IAppConfigFileHotKeyManager appCfgHotKeyManager, IEleEyeEngine eleEyeEngine)
         : base(appCfgHotKeyManager)
     {
-        this.Status = GameStatus.Ready;
+        this.Status = EnumGameStatus.Ready;
         this._eleEyeEngine = eleEyeEngine;
 
         this.InitAsync();
@@ -28,8 +27,8 @@ internal class OfflineAutoViewModel : OfflineChinChessViewModel
         _eleEyeEngine.OnBestMoveReceived += EleEyeEngine_OnBestMoveReceived;
 
         this.SelectOrPutCommand = new DelegateCommand<ChinChessModel>(
-            SelectOrPut_CommandExecute,
-            model => this.Status == GameStatus.Ready 
+            model => SelectOrPut_CommandExecute(model),
+            model => this.Status == EnumGameStatus.Ready
                         && model != null && CurrentChess != model
                         && IsRedTurn
         )
@@ -39,7 +38,7 @@ internal class OfflineAutoViewModel : OfflineChinChessViewModel
 
         this.RevokeCommand = new DelegateCommand(
             Revoke_CommandExecute,
-            () => this.Status == GameStatus.Ready 
+            () => this.Status == EnumGameStatus.Ready
                     && CommandStack?.Count > 0
                     && IsRedTurn
         )
@@ -82,15 +81,21 @@ internal class OfflineAutoViewModel : OfflineChinChessViewModel
         _eleEyeEngine.InitData(string.Empty);
     }
 
-    protected override void SelectOrPut_CommandExecute(ChinChessModel model)
+    protected override bool SelectOrPut_CommandExecute(ChinChessModel model)
     {
         bool isRedTurn = this.IsRedTurn;
-        base.SelectOrPut_CommandExecute(model);
+        
+        if (!base.SelectOrPut_CommandExecute(model))
+        {
+            return false;
+        }
 
         if (isRedTurn != this.IsRedTurn)
         {
             _eleEyeEngine.Move(this.CommandStack.As<IReadOnlyList<MoveCommand>>(), 3000);
         }
+
+        return true;
     }
 
     protected override void DisposeCore()

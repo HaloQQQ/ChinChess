@@ -1,14 +1,14 @@
-﻿using ChinChessClient.Commands;
-using ChinChessClient.Contracts;
-using ChinChessClient.Models;
-using ChinChessClient.Visitors;
+﻿using ChinChessCore.Commands;
+using ChinChessCore.Contracts;
 using ChinChessCore.Models;
+using ChinChessCore.Visitors;
 using IceTea.Pure.Extensions;
 using IceTea.Wpf.Atom.Utils;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
 using System.Collections.ObjectModel;
 
 #pragma warning disable CS8625 // 无法将 null 字面量转换为非 null 的引用类型。
+#pragma warning disable CS8629 // 可为 null 的值类型可为 null。
 namespace ChinChessClient.ViewModels;
 
 internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessModel>
@@ -31,13 +31,13 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
         this._guardVisitor = new GuardVisitor(this.Datas, _canPutVisitor);
     }
 
-    protected override void OnGameStatusChanged(GameStatus newStatus)
+    protected override void OnGameStatusChanged(EnumGameStatus newStatus)
     {
         base.OnGameStatusChanged(newStatus);
 
         switch (newStatus)
         {
-            case GameStatus.Ready:
+            case EnumGameStatus.Ready:
                 WpfAtomUtils.BeginInvoke(() =>
                 {
                     this.RedDeads.Clear();
@@ -159,6 +159,7 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
                                     CommandStack.Count + 1,
                                     chess.Data.IsRed == true,
                                     chess, _canPutVisitor.GetChess(to.Row, to.Column),
+                                    this.Datas,
                                     this.PushDead,
                                     this.ReturnDead
                                 );
@@ -280,9 +281,7 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
 
     protected void ShowWinner(bool isRed, bool isTimeout = false)
     {
-        this.Over_Wav();
-
-        this.Status = GameStatus.Stoped;
+        this.Result = EnumGameResult.VictoryOrDefeat;
 
         var actor = isRed ? "红方" : "黑方";
 

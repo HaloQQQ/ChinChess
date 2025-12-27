@@ -1,5 +1,5 @@
-﻿using ChinChessClient.Contracts;
-using ChinChessClient.Models;
+﻿using ChinChessCore.Contracts;
+using ChinChessCore.Models;
 using IceTea.Pure.Extensions;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
 using Prism.Commands;
@@ -19,8 +19,8 @@ internal abstract class OfflineChinChessViewModelBase : ChinChessViewModelBase
         this.Begin_Wav();
 
         this.SelectOrPutCommand = new DelegateCommand<ChinChessModel>(
-            SelectOrPut_CommandExecute,
-            model => this.Status == GameStatus.Ready && model != null && CurrentChess != model
+            model => SelectOrPut_CommandExecute(model),
+            model => this.Status == EnumGameStatus.Ready && model != null && CurrentChess != model
         )
         .ObservesProperty(() => this.Status)
         .ObservesProperty(() => this.IsRedTurn)
@@ -28,17 +28,17 @@ internal abstract class OfflineChinChessViewModelBase : ChinChessViewModelBase
 
         this.RevokeCommand = new DelegateCommand(
             Revoke_CommandExecute,
-            () => this.Status == GameStatus.Ready && CommandStack?.Count > 0
+            () => this.Status == EnumGameStatus.Ready && CommandStack?.Count > 0
         )
         .ObservesProperty(() => this.Status)
         .ObservesProperty(() => this.CommandStack.Count);
     }
 
-    protected override void SelectOrPut_CommandExecute(ChinChessModel model)
+    protected override bool SelectOrPut_CommandExecute(ChinChessModel model)
     {
         if (!this.SelectOrPut_CommandExecuteCore(model))
         {
-            return;
+            return false;
         }
 
         // 选中
@@ -54,10 +54,10 @@ internal abstract class OfflineChinChessViewModelBase : ChinChessViewModelBase
                 this.Log(this.Name, $"选中{model.Pos}", this.IsRedTurn == true);
             }
 
-            return;
+            return true;
         }
 
-        this.TryPutTo(model);
+        return this.TryPutTo(model);
     }
 
     protected bool TryPutTo(ChinChessModel model)
@@ -109,13 +109,13 @@ internal abstract class OfflineChinChessViewModelBase : ChinChessViewModelBase
         this.Log(this.Name, "重玩", this.IsRedTurn == true);
     }
 
-    protected override void OnGameStatusChanged(GameStatus newStatus)
+    protected override void OnGameStatusChanged(EnumGameStatus newStatus)
     {
         base.OnGameStatusChanged(newStatus);
 
         switch (newStatus)
         {
-            case GameStatus.Ready:
+            case EnumGameStatus.Ready:
                 this.TotalRedSeconds = this.TotalBlackSeconds = 0;
                 break;
             default:

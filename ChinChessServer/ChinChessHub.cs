@@ -23,7 +23,7 @@ public class ChinChessHub : Hub
         if (_usersNormal.TryGetValue(currentUser, out var toUser)
             || _usersJieqi.TryGetValue(currentUser, out toUser))
         {
-            var chess = chessInfo.DeserializeObject<ChessInfo>();
+            var chess = chessInfo.DeserializeObject<MoveInfo>();
             chess.FromUser = currentUser;
             chess.ToUser = toUser;
 
