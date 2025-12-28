@@ -23,7 +23,6 @@ internal abstract class OfflineChinChessViewModelBase : ChinChessViewModelBase
             model => this.Status == EnumGameStatus.Ready && model != null && CurrentChess != model
         )
         .ObservesProperty(() => this.Status)
-        .ObservesProperty(() => this.IsRedTurn)
         .ObservesProperty(() => this.CurrentChess);
 
         this.RevokeCommand = new DelegateCommand(

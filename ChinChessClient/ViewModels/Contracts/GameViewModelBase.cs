@@ -148,8 +148,6 @@ internal abstract class GameViewModelBase<T> : NavigateViewModelBase, IDialogMes
     #region Props
     protected abstract string Name { get; }
 
-    protected bool _needWarn;
-
     public Dictionary<string, IHotKey<Key, ModifierKeys>> KeyGestureDic { get; private set; }
 
     public IList<T> Datas { get; private set; }
@@ -429,16 +427,6 @@ internal abstract class GameViewModelBase<T> : NavigateViewModelBase, IDialogMes
         if (this.Status != EnumGameStatus.Ready)
         {
             this.Dispose();
-        }
-    }
-
-    public override void OnNavigatedTo(NavigationContext navigationContext)
-    {
-        base.OnNavigatedTo(navigationContext);
-
-        if (navigationContext.Parameters.ContainsKey("NeedWarn"))
-        {
-            this._needWarn = (bool)navigationContext.Parameters["NeedWarn"];
         }
     }
     #endregion

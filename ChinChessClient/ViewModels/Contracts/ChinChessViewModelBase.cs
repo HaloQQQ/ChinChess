@@ -166,17 +166,7 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
 
             command.Execute();
 
-            if (this.Mode < ChinChessMode.Offline)
-            {
-                WpfAtomUtils.BeginInvokeAtOnce(() =>
-                {
-                    CommandStack.Insert(0, command);
-                });
-            }
-            else
-            {
-                CommandStack.Insert(0, command);
-            }
+            WpfAtomUtils.InvokeAtOnce(() => CommandStack.Insert(0, command));
 
             return true;
         }

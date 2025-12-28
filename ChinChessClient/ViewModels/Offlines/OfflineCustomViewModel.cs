@@ -36,25 +36,24 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
 
         this.Status = EnumGameStatus.NotInitialized;
 
-        CustomOverCommand = new DelegateCommand(() =>
+        DesignOverCommand = new DelegateCommand(() =>
                                 {
                                     if (!CanUse())
                                     {
                                         return;
                                     }
 
-                                    IsCustomOver = true;
-                                    this.Status = EnumGameStatus.Ready;
-                                })
-                                .ObservesProperty(() => IsCustomOver);
+                                    IsDesignOver = true;
+                                }, () => !IsDesignOver)
+                                .ObservesProperty(() => IsDesignOver);
 
         SelectOrPutCommand = new DelegateCommand<ChinChessModel>(
             model => SelectOrPut_CommandExecute(model),
-            model => IsCustomOver && this.Status == EnumGameStatus.Ready && model != null && CurrentChess != model
+            model => IsDesignOver && this.Status == EnumGameStatus.Ready
+                    && model != null && CurrentChess != model
         )
         .ObservesProperty(() => this.Status)
-        .ObservesProperty(() => this.IsCustomOver)
-        .ObservesProperty(() => this.IsRedTurn)
+        .ObservesProperty(() => this.IsDesignOver)
         .ObservesProperty(() => this.CurrentChess);
 
         SaveDesignCommand = new DelegateCommand<string>(name =>
@@ -64,8 +63,7 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
                 return;
             }
 
-            IsCustomOver = true;
-            this.Status = EnumGameStatus.Ready;
+            IsDesignOver = true;
 
             var chessesInfo = this.Datas.Where(d => !d.Data.IsEmpty)
                                 .Select(m => new ChinChessInfo(m.Pos, isRed: (bool)m.Data.IsRed, chessType: (ChessType)m.Data.Type))
@@ -73,7 +71,7 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
 
             var infoStr = ChinChessSerializer.Serialize(chessesInfo);
 
-            _endGameModel = new EndGameModel(name, infoStr, string.Empty);
+            _endGameModel = new EndGameModel(name, infoStr);
 
             configManager.WriteConfigNode<EndGameModel>(_endGameModel, ["EndGames", name]);
 
@@ -84,35 +82,23 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
             eventAggregator.GetEvent<MainTitleChangedEvent>().Publish(name);
         }).ObservesCanExecute(() => IsSaving);
 
-        this.ToggleRecordCommand = new DelegateCommand(() =>
+        this.SaveRecordCommand = new DelegateCommand(() =>
         {
-            IsRecording = !IsRecording;
+            IEnumerable<string> steps = this.CommandStack.OrderBy(c => c.Index).Select(c => c.Notation);
 
-            if (!IsRecording)
+            _endGameModel.Steps = string.Join(',', steps);
+
+            configManager.WriteConfigNode<EndGameModel>(_endGameModel, ["EndGames", _endGameModel.Name]);
+
+            this.Log(this.Name, "保存行棋步骤", this.IsRedTurn);
+
+            if (!this.IsGameOver())
             {
-                if (this.CommandStack.Count == 0)
-                {
-                    return;
-                }
-
-                IEnumerable<string> steps = this.CommandStack.OrderBy(c => c.Index).Select(c => c.Notation);
-
-                _endGameModel.Steps = string.Join(',', steps);
-
-                configManager.WriteConfigNode<EndGameModel>(_endGameModel, ["EndGames", _endGameModel.Name]);
-
-                this.Log(this.Name, "结束记录行棋步骤", this.IsRedTurn);
-
-                if (!this.IsGameOver())
-                {
-                    this.Result = EnumGameResult.Deuce;
-                }
+                this.Result = EnumGameResult.Deuce;
             }
-            else
-            {
-                this.Log(this.Name, "开始记录行棋步骤", this.IsRedTurn);
-            }
-        });
+        }, () => Result == EnumGameResult.During && !this.CommandStack.IsNullOrEmpty())
+            .ObservesProperty(() => this.CommandStack.Count)
+            .ObservesProperty(() => Result);
 
         bool CanUse()
         {
@@ -124,9 +110,9 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
 
             var enemyShuai = this.Datas.First(d => d.Data.Type == ChessType.帥 && d.Data.IsRed != this.IsRedTurn);
 
-            if (enemyShuai.Data.IsDangerous(this._canPutVisitor, enemyShuai.Pos, out _) ||
-                _canPutVisitor.FaceToFace() ||
-                this.IsGameOver())
+            if (enemyShuai.Data.IsDangerous(this._canPutVisitor, enemyShuai.Pos, out _) 
+                || _canPutVisitor.FaceToFace() 
+                || this.IsGameOver())
             {
                 this.PublishMsg("不允许设计死局");
                 return false;
@@ -220,7 +206,7 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
             TemplateDatas.Add(templateData);
         }
 
-        IsCustomOver = false;
+        IsDesignOver = false;
     }
 
     /// <summary>
@@ -294,11 +280,20 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
         this._eventAggregator.GetEvent<MainTitleChangedEvent>().Publish(this.Title);
     }
 
-    private bool _isCustomOver;
-    public bool IsCustomOver
+    private bool _isDesignOver;
+    public bool IsDesignOver
     {
-        get => _isCustomOver;
-        private set => SetProperty<bool>(ref _isCustomOver, value);
+        get => _isDesignOver;
+        private set
+        {
+            if (SetProperty<bool>(ref _isDesignOver, value))
+            {
+                if (value)
+                {
+                    this.Status = EnumGameStatus.Ready;
+                }
+            }
+        }
     }
 
 
@@ -309,13 +304,6 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
         set => SetProperty<bool>(ref _isSaving, value);
     }
 
-    private bool _isRecording;
-    public bool IsRecording
-    {
-        get => _isRecording;
-        private set => SetProperty<bool>(ref _isRecording, value);
-    }
-
     private string _designName;
     public string DesignName
     {
@@ -323,11 +311,9 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
         set => SetProperty<string>(ref _designName, value);
     }
 
-    private Lazy<IList<string>> _steps = new Lazy<IList<string>>(() => new List<string>());
-
-    public ICommand CustomOverCommand { get; private set; }
+    public ICommand DesignOverCommand { get; private set; }
     public ICommand SaveDesignCommand { get; private set; }
-    public ICommand ToggleRecordCommand { get; private set; }
+    public ICommand SaveRecordCommand { get; private set; }
 
     public override void OnNavigatedTo(NavigationContext navigationContext)
     {
@@ -348,7 +334,7 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
 
             this.InitDatas();
 
-            this.CustomOverCommand.Execute(null);
+            this.DesignOverCommand.Execute(null);
         }
     }
 
@@ -356,9 +342,9 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
     {
         base.DisposeCore();
 
-        this.CustomOverCommand = null;
+        this.DesignOverCommand = null;
         this.SaveDesignCommand = null;
-        this.ToggleRecordCommand = null;
+        this.SaveRecordCommand = null;
 
         this._endGameModel = null;
 

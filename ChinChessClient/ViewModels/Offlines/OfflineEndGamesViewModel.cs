@@ -33,7 +33,8 @@ internal class OfflineEndGamesViewModel : NavigateViewModelBase
             nr => eventAggregator.GetEvent<MainTitleChangedEvent>().Publish($"{this.Title}-{model.Name}"),
             new NavigationParameters()
             {
-                {"EndGame", model }
+                {"EndGame", model },
+                {"NeedWarn", _needWarn }
             })
         );
 
@@ -42,7 +43,8 @@ internal class OfflineEndGamesViewModel : NavigateViewModelBase
             nr => eventAggregator.GetEvent<MainTitleChangedEvent>().Publish($"{this.Title}-{model.Name}"),
             new NavigationParameters()
             {
-                {"EndGame", model }
+                {"EndGame", model },
+                {"NeedWarn", _needWarn }
             })
         );
     }

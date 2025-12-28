@@ -5,11 +5,10 @@ namespace ChinChessCore.Models
 {
     public class EndGameModel : NotifyBase
     {
-        public EndGameModel(string name, string datas, string steps)
+        public EndGameModel(string name, string datas)
         {
             Name = name.AssertArgumentNotNull(nameof(name));
             Datas = datas;
-            Steps = steps;
         }
 
         /// <summary>
@@ -24,7 +23,7 @@ namespace ChinChessCore.Models
         public string Name
         {
             get => _name;
-            set => _name = value.AssertArgumentNotNull(nameof(_datas));
+            set => _name = value;
         }
 
         private string _datas;

@@ -152,25 +152,15 @@
 
                             <Button Style="{StaticResource CancelLastButton}" />
 
-                            <Button Command="{Binding ToggleRecordCommand}" ToolTip="记录步骤">
-                                <Button.Style>
-                                    <Style BasedOn="{StaticResource FunctionButton}" TargetType="Button">
-                                        <Setter Property="FontFamily" Value="{StaticResource Iconfont}" />
-
-                                        <Setter Property="Content" Value="&#xe64d;" />
-
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsRecording}" Value="True">
-                                                <Setter Property="Content" Value="&#xe615;" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
+                            <Button
+                                Command="{Binding SaveRecordCommand}"
+                                Content="&#xe601;"
+                                Style="{StaticResource FunctionButton}"
+                                ToolTip="保存棋路" />
                         </WrapPanel>
                     </DockPanel>
 
-                    <Grid Visibility="{Binding IsCustomOver, Converter={StaticResource BoolToCollapsedVisibleConverter}}">
+                    <Grid Visibility="{Binding IsDesignOver, Converter={StaticResource BoolToCollapsedVisibleConverter}}">
                         <ListBox Background="LightBlue" ItemsSource="{Binding TemplateDatas}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate DataType="{x:Type coreModels:CustomChess}">
@@ -226,7 +216,7 @@
                         <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top">
                             <Button
                                 Padding="3"
-                                Command="{Binding CustomOverCommand}"
+                                Command="{Binding DesignOverCommand}"
                                 FontSize="25"
                                 Style="{StaticResource Button_Icon_Close}"
                                 ToolTip="设计完成" />
@@ -249,35 +239,24 @@
                                         Height="300"
                                         Background="{StaticResource PopupBackground}"
                                         CornerRadius="20">
-                                        <StackPanel>
-                                            <!--<TextBox
-                                                Width="400"
-                                                Height="80"
-                                                FontSize="35"
-                                                MyAttachProperty.IsCollapsed="True"
-                                                MyAttachProperty.PlaceHolder="步骤"
-                                                Style="{StaticResource TextBox_PlaceHolderAsLable_Execute}"
-                                                Text="{Binding Steps, UpdateSourceTrigger=PropertyChanged, Delay=50}" />-->
-
-                                            <TextBox
-                                                Width="400"
-                                                Height="80"
-                                                FontSize="35"
-                                                MyAttachProperty.Command="{Binding SaveDesignCommand}"
-                                                MyAttachProperty.CommandParameter="{Binding DesignName}"
-                                                MyAttachProperty.DoubleValue="35"
-                                                MyAttachProperty.IconFontText="&#xe64f;"
-                                                MyAttachProperty.PlaceHolder="残局名"
-                                                Style="{StaticResource TextBox_PlaceHolderAsLable_Execute}"
-                                                Text="{Binding DesignName, UpdateSourceTrigger=PropertyChanged, Delay=50}">
-                                                <TextBox.InputBindings>
-                                                    <KeyBinding
-                                                        Key="Return"
-                                                        Command="{Binding SaveDesignCommand}"
-                                                        CommandParameter="{Binding DesignName}" />
-                                                </TextBox.InputBindings>
-                                            </TextBox>
-                                        </StackPanel>
+                                        <TextBox
+                                            Width="400"
+                                            Height="80"
+                                            FontSize="35"
+                                            MyAttachProperty.Command="{Binding SaveDesignCommand}"
+                                            MyAttachProperty.CommandParameter="{Binding DesignName}"
+                                            MyAttachProperty.DoubleValue="35"
+                                            MyAttachProperty.IconFontText="&#xe64f;"
+                                            MyAttachProperty.PlaceHolder="残局名"
+                                            Style="{StaticResource TextBox_PlaceHolderAsLable_Execute}"
+                                            Text="{Binding DesignName, UpdateSourceTrigger=PropertyChanged, Delay=50}">
+                                            <TextBox.InputBindings>
+                                                <KeyBinding
+                                                    Key="Return"
+                                                    Command="{Binding SaveDesignCommand}"
+                                                    CommandParameter="{Binding DesignName}" />
+                                            </TextBox.InputBindings>
+                                        </TextBox>
                                     </Border>
 
                                     <ToggleButton
