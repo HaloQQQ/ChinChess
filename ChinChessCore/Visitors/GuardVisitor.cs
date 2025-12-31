@@ -89,15 +89,16 @@ namespace ChinChessCore.Visitors
             var pos = new Position(currentRow, currentColumn);
 
             #region 士
-            while (fromPos != pos && chess.IsPoseValid_Rel(ChessType.仕, pos))
+            while (fromPos != pos && chess.IsPosValid_Rel(ChessType.仕, pos))
             {
                 if (this.ProtectByShield(chess, pos, toPos, ChessType.仕, new[]
-                {
-                new Position(pos.Row - 1, pos.Column - 1),
-                new Position(pos.Row - 1, pos.Column + 1),
-                new Position(pos.Row + 1, pos.Column - 1),
-                new Position(pos.Row + 1, pos.Column + 1)
-            }))
+                        {
+                            new Position(pos.Row - 1, pos.Column - 1),
+                            new Position(pos.Row - 1, pos.Column + 1),
+                            new Position(pos.Row + 1, pos.Column - 1),
+                            new Position(pos.Row + 1, pos.Column + 1)
+                        })
+                    )
                 {
                     return true;
                 }
@@ -110,7 +111,7 @@ namespace ChinChessCore.Visitors
             currentRow = toRow + rowStep; currentColumn = toColumn + columnStep;
             pos = new Position(currentRow, currentColumn);
 
-            while (fromPos != pos && chess.IsPoseValid_Rel(ChessType.相, pos))
+            while (fromPos != pos && chess.IsPosValid_Rel(ChessType.相, pos))
             {
                 if (this.ProtectByShield(chess, pos, toPos, ChessType.相, new[]
                 {
@@ -173,7 +174,7 @@ namespace ChinChessCore.Visitors
             }
             #endregion
 
-            #region 車、炮
+            #region 車、炮  垫
             currentRow = toRow + rowStep; currentColumn = toColumn + columnStep;
             pos = new Position(currentRow, currentColumn);
 
@@ -279,6 +280,17 @@ namespace ChinChessCore.Visitors
                 }
 
                 pos = new Position(currentRow += rowStep, currentColumn += columnStep);
+            }
+            #endregion
+
+            #region 炮  抽
+            if (chess.Type == ChessType.炮)
+            {
+                if(_canPutToVisitor.GetChessData(fromPos.Row, fromPos.Column)
+                    .CanLeave(_canPutToVisitor, fromPos, fromPos.Row == toPos.Row))
+                {
+                    return true;
+                }
             }
             #endregion
 

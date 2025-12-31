@@ -41,13 +41,11 @@ namespace ChinChessCore.Contracts
 
             int fromColumn = Constants.GetRowOrColumnFromChar(fromChar);
 
-            AppUtils.AssertDataValidation(Enum.TryParse<EnumMoveDirection>(notation[notaionLength - 2].ToString(), out EnumMoveDirection direction), "数据格式不对");
-
-            char targetChar = notation[notaionLength - 1];
-
-
             // 计算起始位置和目标位置
             var fromPosition = CalculateStartPosition(nthChess, chessType, fromColumn, isRed, currentBoard);
+
+            AppUtils.AssertDataValidation(Enum.TryParse<EnumMoveDirection>(notation[notaionLength - 2].ToString(), out EnumMoveDirection direction), "数据格式不对");
+            char targetChar = notation[notaionLength - 1];
             var toPosition = CalculateTargetPosition(chessType, fromPosition, direction, targetChar, isRed);
 
             return new MovePath(fromPosition, toPosition);

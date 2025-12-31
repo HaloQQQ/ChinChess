@@ -1,4 +1,5 @@
-﻿using ChinChessCore.Visitors;
+﻿using ChinChessCore.Contracts;
+using ChinChessCore.Visitors;
 using IceTea.Pure.Extensions;
 using IceTea.Pure.Utils;
 using System;
@@ -35,13 +36,38 @@ namespace ChinChessCore.Models
                 }
             }
 
-            int currentRow = from.Row + rowStep, currentColumn = from.Column + columnStep;
+            return this.TryGetTargetEnemy(canPutToVisitor, from, isHorizontal ? EnumDirection.Up : EnumDirection.Left, out _) 
+                || this.TryGetTargetEnemy(canPutToVisitor, from, isHorizontal ? EnumDirection.Down : EnumDirection.Right, out _);
+        }
+
+        public bool TryGetTargetEnemy(IVisitor visitor, Position fromPos, EnumDirection enumDirection, out Position enemyPos)
+        {
+            int rowStep = 0, columnStep = 0;
+            switch (enumDirection)
+            {
+                case EnumDirection.Up:
+                    rowStep = -1;
+                    break;
+                case EnumDirection.Down:
+                    rowStep = 1;
+                    break;
+                case EnumDirection.Left:
+                    columnStep = -1;
+                    break;
+                case EnumDirection.Right:
+                    columnStep = 1;
+                    break;
+                default:
+                    break;
+            }
+
+            int currentRow = fromPos.Row + rowStep, currentColumn = fromPos.Column + columnStep;
 
             int mountainsCount = 0;
 
             while (currentRow.IsInRange(0, 9) && currentColumn.IsInRange(0, 8))
             {
-                InnerChinChess current = canPutToVisitor.GetChessData(currentRow, currentColumn);
+                InnerChinChess current = visitor.GetChessData(currentRow, currentColumn);
                 if (!current.IsEmpty)
                 {
                     mountainsCount++;
@@ -50,16 +76,19 @@ namespace ChinChessCore.Models
                     {
                         if (this.IsEnemy(current))
                         {
+                            enemyPos = new Position(currentRow, currentColumn);
                             return true;
                         }
 
-                        return false;
+                        break;
                     }
                 }
 
                 currentRow += rowStep;
                 currentColumn += columnStep;
             }
+
+            enemyPos = default;
 
             return false;
         }

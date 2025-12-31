@@ -30,7 +30,7 @@ internal class OfflineEndGamesViewModel : NavigateViewModelBase
 
         this.GoToPlayManualCommand = new DelegateCommand<EndGameModel>(
             model => regionManager.RequestNavigate("ChinChessRegion", "OfflineCustom",
-            nr => eventAggregator.GetEvent<MainTitleChangedEvent>().Publish($"{this.Title}-{model.Name}"),
+            nr => eventAggregator.GetEvent<MainTitleChangedEvent>().Publish($"残局挑战-{model.Name}"),
             new NavigationParameters()
             {
                 {"EndGame", model },
@@ -40,7 +40,7 @@ internal class OfflineEndGamesViewModel : NavigateViewModelBase
 
         this.GoToPlayAnswerCommand = new DelegateCommand<EndGameModel>(
             model => regionManager.RequestNavigate("ChinChessRegion", "OfflineAnswer",
-            nr => eventAggregator.GetEvent<MainTitleChangedEvent>().Publish($"{this.Title}-{model.Name}"),
+            nr => eventAggregator.GetEvent<MainTitleChangedEvent>().Publish($"残局观摩-{model.Name}"),
             new NavigationParameters()
             {
                 {"EndGame", model },

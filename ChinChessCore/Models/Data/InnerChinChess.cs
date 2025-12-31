@@ -268,6 +268,14 @@ namespace ChinChessCore.Models
         }
         #endregion
 
+        /// <summary>
+        /// 用于帮凶离开本位置
+        /// </summary>
+        /// <param name="canPutToVisitor"></param>
+        /// <param name="from"></param>
+        /// <param name="isHorizontal">杀手和被害者是否同一行</param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
         public virtual bool CanLeave(ICanPutToVisitor canPutToVisitor, Position from, bool isHorizontal = true)
             => throw new NotImplementedException();
 
@@ -324,7 +332,7 @@ namespace ChinChessCore.Models
         public bool IsPosValid(Position pos)
             => this.IsPosValid_Abs((ChessType)this.Type, pos, false);
 
-        public bool IsPoseValid_Rel(ChessType chessType, Position pos, bool isEnemy = true)
+        public bool IsPosValid_Rel(ChessType chessType, Position pos, bool isEnemy = true)
         {
             if (chessType != ChessType.帥 && this.IsJieQi && !this.IsBack)
             {

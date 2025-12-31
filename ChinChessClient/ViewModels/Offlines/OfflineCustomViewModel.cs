@@ -79,6 +79,8 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
 
             DesignName = string.Empty;
 
+            this.PublishMsg("已保存布局");
+
             eventAggregator.GetEvent<MainTitleChangedEvent>().Publish(name);
         }).ObservesCanExecute(() => IsSaving);
 
@@ -91,6 +93,8 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
             configManager.WriteConfigNode<EndGameModel>(_endGameModel, ["EndGames", _endGameModel.Name]);
 
             this.Log(this.Name, "保存行棋步骤", this.IsRedTurn);
+
+            this.PublishMsg("已保存行棋步骤");
 
             if (!this.IsGameOver())
             {
