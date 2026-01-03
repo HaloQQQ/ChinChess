@@ -1,4 +1,5 @@
-﻿using ChinChessCore.Visitors;
+﻿using ChinChessCore.Commands;
+using ChinChessCore.Visitors;
 using IceTea.Pure.Utils;
 using System;
 
@@ -22,22 +23,34 @@ namespace ChinChessCore.Models
                                     new Position(from.Row + 2, from.Column - 2)
                                 })
             {
-                if (this.CanPutTo(canPutToVisitor, from, item))
+                if (!this.CanPutTo(canPutToVisitor, from, item))
                 {
-                    return true;
+                    continue;
+                }
+
+                using (new MockMoveCommand(canPutToVisitor.GetChess(from), canPutToVisitor.GetChess(item))
+                            .Execute())
+                {
+                    if (!this.IsDangerous(canPutToVisitor, item, out ChinChessModel _))
+                    {
+                        return true;
+                    }
                 }
             }
 
             return false;
         }
 
-        public Position GetXiangBarrier(Position from, Position to)
+        public bool TryGetXiangBarrier(IVisitor visitor, Position from, Position to, out Position xiangBarrierPos)
         {
             AppUtils.AssertDataValidation(
                 Math.Abs(to.Row - from.Row) == 2 && Math.Abs(to.Column - from.Column) == 2,
                 "象的数据不对");
 
-            return new Position((from.Row + to.Row) / 2, (from.Column + to.Column) / 2);
+
+            xiangBarrierPos = new Position((from.Row + to.Row) / 2, (from.Column + to.Column) / 2);
+
+            return !visitor.GetChessData(xiangBarrierPos).IsEmpty;
         }
     }
 }

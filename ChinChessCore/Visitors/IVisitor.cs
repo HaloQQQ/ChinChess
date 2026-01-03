@@ -8,9 +8,9 @@ namespace ChinChessCore.Visitors
     {
         bool FaceToFace();
 
-        ChinChessModel GetChess(int row, int column);
+        ChinChessModel GetChess(Position pos);
 
-        InnerChinChess GetChessData(int row, int column);
+        InnerChinChess GetChessData(Position pos);
 
         IEnumerable<ChinChessModel> GetChesses();
 

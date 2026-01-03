@@ -187,13 +187,13 @@ internal abstract class OnlineChinChessViewModelBase : ChinChessViewModelBase
             {
                 if (_canPutVisitor != null)
                 {
-                    var action = _canPutVisitor.GetChessData(chessInfo.To.Row, chessInfo.To.Column).IsEmpty
+                    var action = _canPutVisitor.GetChessData(chessInfo.To).IsEmpty
                                     ? "移动" : "吃子";
                     this.Log(this.Name, $"收到{action}通知{chessInfo.From}=>{chessInfo.To}", this.IsRedRole == false);
                 }
             }
 
-            var data = _canPutVisitor.GetChess(chessInfo.To.Row, chessInfo.To.Column);
+            var data = _canPutVisitor.GetChess(chessInfo.To);
             this.SelectOrPutCommand.Execute(data);
         });
 

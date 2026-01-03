@@ -1,4 +1,6 @@
-﻿using System;
+﻿using IceTea.Pure.Extensions;
+using IceTea.Pure.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -9,10 +11,7 @@ namespace ChinChessCore.Contracts
     {
         public static string Serialize(IList<ChinChessInfo> chesses)
         {
-            if (chesses == null || chesses.Count == 0)
-            {
-                throw new InvalidOperationException();
-            }
+            chesses.AssertNotEmpty(nameof(chesses));
 
             return string.Join(",", chesses.Select(c => c.ToString()));
         }

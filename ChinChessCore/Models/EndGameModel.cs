@@ -7,7 +7,7 @@ namespace ChinChessCore.Models
     {
         public EndGameModel(string name, string datas)
         {
-            Name = name.AssertArgumentNotNull(nameof(name));
+            Name = name;
             Datas = datas;
         }
 
@@ -23,7 +23,7 @@ namespace ChinChessCore.Models
         public string Name
         {
             get => _name;
-            set => _name = value;
+            set => _name = value.AssertArgumentNotNull(nameof(_name));
         }
 
         private string _datas;

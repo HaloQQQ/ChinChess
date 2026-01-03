@@ -86,7 +86,7 @@ namespace ChinChessCore.Models
             {
                 if (TryPutToIfIsEnemy(canPutToVisitor, item, selfPos, ChessType.兵))
                 {
-                    killer = canPutToVisitor.GetChess(item.Row, item.Column);
+                    killer = canPutToVisitor.GetChess(item);
 
                     return true;
                 }
@@ -107,7 +107,7 @@ namespace ChinChessCore.Models
             {
                 if (TryPutToIfIsEnemy(canPutToVisitor, item, selfPos, ChessType.馬))
                 {
-                    killer = canPutToVisitor.GetChess(item.Row, item.Column);
+                    killer = canPutToVisitor.GetChess(item);
 
                     return true;
                 }
@@ -125,7 +125,7 @@ namespace ChinChessCore.Models
             {
                 if (FindJu(canPutToVisitor, toRow, toColumn, rowStep, columnStep, out Position pos))
                 {
-                    killer = canPutToVisitor.GetChess(pos.Row, pos.Column);
+                    killer = canPutToVisitor.GetChess(pos);
 
                     return true;
                 }
@@ -134,23 +134,22 @@ namespace ChinChessCore.Models
             bool FindJu(IVisitor canEatVisitor, int row, int column, int rowStep, int columnStep, out Position pos)
             {
                 int fromRow = row + rowStep, fromColumn = column + columnStep;
+                Position currentPos = new Position(fromRow, fromColumn);
 
-                while (fromRow.IsInRange(0, 9) && fromColumn.IsInRange(0, 8))
+                while (currentPos.IsValid)
                 {
-                    if (!canEatVisitor.GetChessData(fromRow, fromColumn).IsEmpty)
+                    if (!canEatVisitor.GetChessData(currentPos).IsEmpty)
                     {
-                        var point = new Position(fromRow, fromColumn);
-                        if (IsEnemy(canEatVisitor, point, ChessType.車))
+                        if (IsEnemy(canEatVisitor, currentPos, ChessType.車))
                         {
-                            pos = point;
+                            pos = currentPos;
                             return true;
                         }
 
                         break;
                     }
 
-                    fromRow += rowStep;
-                    fromColumn += columnStep;
+                    currentPos = new Position(fromRow += rowStep, fromColumn += columnStep);
                 }
 
                 pos = default;
@@ -170,7 +169,7 @@ namespace ChinChessCore.Models
             {
                 if (FindPao(canPutToVisitor, toRow, toColumn, rowStep, columnStep, out Position pos))
                 {
-                    killer = canPutToVisitor.GetChess(pos.Row, pos.Column);
+                    killer = canPutToVisitor.GetChess(pos);
 
                     return true;
                 }
@@ -179,21 +178,21 @@ namespace ChinChessCore.Models
             bool FindPao(IVisitor visitor, int row, int column, int rowStep, int columnStep, out Position pos)
             {
                 int fromRow = row + rowStep, fromColumn = column + columnStep;
+                Position currentPos = new Position(fromRow, fromColumn);
 
                 int mountainsCount = 0;
 
-                while (fromRow.IsInRange(0, 9) && fromColumn.IsInRange(0, 8))
+                while (currentPos.IsValid)
                 {
-                    if (!visitor.GetChessData(fromRow, fromColumn).IsEmpty)
+                    if (!visitor.GetChessData(currentPos).IsEmpty)
                     {
                         mountainsCount++;
 
                         if (mountainsCount == 2)
                         {
-                            var point = new Position(fromRow, fromColumn);
-                            if (IsEnemy(visitor, point, ChessType.炮))
+                            if (IsEnemy(visitor, currentPos, ChessType.炮))
                             {
-                                pos = point;
+                                pos = currentPos;
                                 return true;
                             }
 
@@ -201,8 +200,7 @@ namespace ChinChessCore.Models
                         }
                     }
 
-                    fromRow += rowStep;
-                    fromColumn += columnStep;
+                    currentPos = new Position(fromRow += rowStep, fromColumn += columnStep);
                 }
 
                 pos = default;
@@ -221,7 +219,7 @@ namespace ChinChessCore.Models
             {
                 if (TryPutToIfIsEnemy(canPutToVisitor, item, selfPos, ChessType.相))
                 {
-                    killer = canPutToVisitor.GetChess(item.Row, item.Column);
+                    killer = canPutToVisitor.GetChess(item);
 
                     return true;
                 }
@@ -238,7 +236,7 @@ namespace ChinChessCore.Models
             {
                 if (TryPutToIfIsEnemy(canPutToVisitor, item, selfPos, ChessType.仕))
                 {
-                    killer = canPutToVisitor.GetChess(item.Row, item.Column);
+                    killer = canPutToVisitor.GetChess(item);
 
                     return true;
                 }
@@ -255,7 +253,7 @@ namespace ChinChessCore.Models
             {
                 if (TryPutToIfIsEnemy(canPutToVisitor, item, selfPos, ChessType.帥))
                 {
-                    killer = canPutToVisitor.GetChess(item.Row, item.Column);
+                    killer = canPutToVisitor.GetChess(item);
 
                     return true;
                 }
@@ -269,7 +267,7 @@ namespace ChinChessCore.Models
         #endregion
 
         /// <summary>
-        /// 用于帮凶离开本位置
+        /// 离开此地，到不危险的地方
         /// </summary>
         /// <param name="canPutToVisitor"></param>
         /// <param name="from"></param>
@@ -291,7 +289,7 @@ namespace ChinChessCore.Models
         {
             if (IsEnemy(canPutToVisitor, from, chessType))
             {
-                var data = canPutToVisitor.GetChessData(from.Row, from.Column);
+                var data = canPutToVisitor.GetChessData(from);
 
                 if (data.CanPutTo(canPutToVisitor, from, to))
                 {
@@ -316,7 +314,7 @@ namespace ChinChessCore.Models
                 return false;
             }
 
-            var data = visitor.GetChessData(position.Row, position.Column);
+            var data = visitor.GetChessData(position);
 
             return this.IsEnemy(data) && ((data.Type & chessType) == data.Type);
         }

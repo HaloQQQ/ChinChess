@@ -1,4 +1,5 @@
-﻿using ChinChessCore.Visitors;
+﻿using ChinChessCore.Commands;
+using ChinChessCore.Visitors;
 using IceTea.Pure.Utils;
 using System;
 
@@ -29,16 +30,25 @@ namespace ChinChessCore.Models
                                 new Position(from.Row + 1, from.Column + 2)
                             })
             {
-                if (this.CanPutTo(canPutToVisitor, from, item))
+                if (!this.CanPutTo(canPutToVisitor, from, item))
                 {
-                    return true;
+                    continue; 
+                }
+
+                using (new MockMoveCommand(canPutToVisitor.GetChess(from), canPutToVisitor.GetChess(item))
+                            .Execute())
+                {
+                    if (!this.IsDangerous(canPutToVisitor, item, out ChinChessModel _))
+                    {
+                        return true;
+                    }
                 }
             }
 
             return false;
         }
 
-        public Position GetMaBarrier(Position from, Position to)
+        public bool TryGetMaBarrier(IVisitor visitor, Position from, Position to, out Position maBarrierPos)
         {
             var isHorizontal = Math.Abs(to.Row - from.Row) == 1 && Math.Abs(to.Column - from.Column) == 2;
 
@@ -48,11 +58,15 @@ namespace ChinChessCore.Models
 
             if (isHorizontal)
             {
-                return new Position(from.Row, (from.Column + to.Column) / 2);
+                maBarrierPos = new Position(from.Row, (from.Column + to.Column) / 2);
+
+                return !visitor.GetChessData(maBarrierPos).IsEmpty;
             }
             else
             {
-                return new Position((from.Row + to.Row) / 2, from.Column);
+                maBarrierPos = new Position((from.Row + to.Row) / 2, from.Column);
+
+                return !visitor.GetChessData(maBarrierPos).IsEmpty;
             }
         }
     }

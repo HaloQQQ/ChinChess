@@ -43,25 +43,27 @@ namespace ChinChessCore.Visitors
                 bool hasChoice = false;
 
                 int currentRow = fromRow + rowStep, currentColumn = fromColumn + columnStep;
+                Position currentPos = new Position(currentRow, currentColumn);
 
-                if (!fromData.IsPosValid(new Position(currentRow, currentColumn)))
+                if (!fromData.IsPosValid(currentPos))
                 {
                     return false;
                 }
 
-                ChinChessModel current = this.GetChess(currentRow, currentColumn);
+                ChinChessModel current = this.GetChess(currentPos);
                 while (current.Data.IsEmpty)
                 {
                     current.IsReadyToPut = true;
 
                     hasChoice = true;
 
-                    if (!fromData.IsPosValid(new Position(currentRow += rowStep, currentColumn += columnStep)))
+                    currentPos = new Position(currentRow += rowStep, currentColumn += columnStep);
+                    if (!fromData.IsPosValid(currentPos))
                     {
                         return true;
                     }
 
-                    current = this.GetChess(currentRow, currentColumn);
+                    current = this.GetChess(currentPos);
                 }
 
                 if (fromData.IsEnemy(current.Data))
@@ -105,7 +107,7 @@ namespace ChinChessCore.Visitors
                         return hasChoice;
                     }
 
-                    ChinChessModel current = this.GetChess(currentRow, currentColumn);
+                    ChinChessModel current = this.GetChess(currentPos);
                     if (current.Data.IsEmpty)
                     {
                         if (mountainsCount == 0)
@@ -162,10 +164,11 @@ namespace ChinChessCore.Visitors
             bool MarkMa(ChinChessMa fromData, Position _from, int rowStep, int columnStep)
             {
                 int toRow = _from.Row + rowStep, toColumn = _from.Column + columnStep;
+                Position toPos = new Position(toRow, toColumn);
 
-                if (fromData.Accept(_canPutToVisitor, from, new Position(toRow, toColumn)))
+                if (fromData.Accept(_canPutToVisitor, from, toPos))
                 {
-                    this.GetChess(toRow, toColumn).IsReadyToPut = true;
+                    this.GetChess(toPos).IsReadyToPut = true;
 
                     return true;
                 }
@@ -191,10 +194,11 @@ namespace ChinChessCore.Visitors
             bool MarkXiang(ChinChessXiang fromData, Position _from, int rowStep, int columnStep)
             {
                 int toRow = _from.Row + rowStep, toColumn = _from.Column + columnStep;
+                Position toPos = new Position(toRow, toColumn);
 
-                if (fromData.Accept(_canPutToVisitor, _from, new Position(toRow, toColumn)))
+                if (fromData.Accept(_canPutToVisitor, _from, toPos))
                 {
-                    this.GetChess(toRow, toColumn).IsReadyToPut = true;
+                    this.GetChess(toPos).IsReadyToPut = true;
 
                     return true;
                 }
@@ -220,10 +224,11 @@ namespace ChinChessCore.Visitors
             bool MarkBing(ChinChessBing fromData, Position _from, int rowStep, int columnStep)
             {
                 int toRow = _from.Row + rowStep, toColumn = _from.Column + columnStep;
+                Position toPos = new Position(toRow, toColumn);
 
-                if (fromData.Accept(_canPutToVisitor, from, new Position(toRow, toColumn)))
+                if (fromData.Accept(_canPutToVisitor, from, toPos))
                 {
-                    this.GetChess(toRow, toColumn).IsReadyToPut = true;
+                    this.GetChess(toPos).IsReadyToPut = true;
 
                     return true;
                 }
@@ -248,11 +253,11 @@ namespace ChinChessCore.Visitors
 
             bool MarkShi(ChinChessShi fromData, Position _from, int rowStep, int columnStep)
             {
-                int toRow = _from.Row + rowStep, toColumn = _from.Column + columnStep;
+                Position toPos = new Position(_from.Row + rowStep, _from.Column + columnStep);
 
-                if (fromData.Accept(_canPutToVisitor, from, new Position(toRow, toColumn)))
+                if (fromData.Accept(_canPutToVisitor, from, toPos))
                 {
-                    this.GetChess(toRow, toColumn).IsReadyToPut = true;
+                    this.GetChess(toPos).IsReadyToPut = true;
 
                     return true;
                 }
@@ -277,11 +282,11 @@ namespace ChinChessCore.Visitors
 
             bool MarkShuai(ChinChessShuai fromData, Position _from, int rowStep, int columnStep)
             {
-                int toRow = _from.Row + rowStep, toColumn = _from.Column + columnStep;
+                Position toPos = new Position(_from.Row + rowStep, _from.Column + columnStep);
 
-                if (fromData.Accept(_canPutToVisitor, from, new Position(toRow, toColumn)))
+                if (fromData.Accept(_canPutToVisitor, from, toPos))
                 {
-                    this.GetChess(toRow, toColumn).IsReadyToPut = true;
+                    this.GetChess(toPos).IsReadyToPut = true;
 
                     return true;
                 }

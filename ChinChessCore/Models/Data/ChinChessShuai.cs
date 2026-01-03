@@ -22,9 +22,18 @@ namespace ChinChessCore.Models
                                     new Position(from.Row - rowStep, from.Column - columnStep)
                                 })
             {
-                if (this.CanPutTo(canPutToVisitor, from, item))
+                if (!this.CanPutTo(canPutToVisitor, from, item))
                 {
-                    return true;
+                    continue;
+                }
+
+                using (new MockMoveCommand(canPutToVisitor.GetChess(from), canPutToVisitor.GetChess(item))
+                            .Execute())
+                {
+                    if (!this.IsDangerous(canPutToVisitor, item, out _))
+                    {
+                        return true;
+                    }
                 }
             }
 
@@ -43,12 +52,12 @@ namespace ChinChessCore.Models
                 if (this.CanPutTo(canPutToVisitor, selfPos, item))
                 {
                     using (new MockMoveCommand(
-                                canPutToVisitor.GetChess(selfPos.Row, selfPos.Column),
-                                canPutToVisitor.GetChess(item.Row, item.Column)
+                                canPutToVisitor.GetChess(selfPos),
+                                canPutToVisitor.GetChess(item)
                             ).Execute()
                         )
                     {
-                        if (!canPutToVisitor.GetChessData(item.Row, item.Column)
+                        if (!canPutToVisitor.GetChessData(item)
                                 .IsDangerous(canPutToVisitor, item, out _))
                         {
                             if (!canPutToVisitor.FaceToFace())

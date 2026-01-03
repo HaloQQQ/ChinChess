@@ -2,10 +2,16 @@
 using ChinChessCore.Contracts;
 using ChinChessCore.Models;
 using ChinChessCore.Visitors;
+using IceTea.Atom.Extensions;
+using IceTea.Pure.Contracts;
 using IceTea.Pure.Extensions;
 using IceTea.Wpf.Atom.Utils;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
+using Prism.Commands;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Security.Cryptography;
+using System.Windows.Input;
 
 #pragma warning disable CS8625 // 无法将 null 字面量转换为非 null 的引用类型。
 #pragma warning disable CS8629 // 可为 null 的值类型可为 null。
@@ -20,15 +26,42 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
     public ObservableCollection<InnerChinChess> BlackDeads { get; private set; } = new();
     public ObservableCollection<InnerChinChess> RedDeads { get; private set; } = new();
 
-    protected CanPutVisitor _canPutVisitor;
+    protected ICanPutToVisitor _canPutVisitor;
     protected IPreMoveVisitor _preMoveVisitor;
     private IGuardVisitor _guardVisitor;
 
     protected ChinChessViewModelBase(IAppConfigFileHotKeyManager appCfgHotKeyManager) : base(appCfgHotKeyManager)
     {
-        this._canPutVisitor = new CanPutVisitor(this.Datas);
+        this._canPutVisitor = new CanPutToVisitor(this.Datas);
         this._preMoveVisitor = new PreMoveVisitor(this.Datas, _canPutVisitor);
         this._guardVisitor = new GuardVisitor(this.Datas, _canPutVisitor);
+
+        this.ExportDataCommand = new DelegateCommand(ExportDataCommand_CommandExecute, () => this.CommandStack.Count > 0)
+            .ObservesProperty(() => this.CommandStack.Count);
+    }
+
+    protected virtual void ExportDataCommand_CommandExecute()
+    {
+        var list = new List<ChinChessModel>();
+        for (int row = 0; row < 10; row++)
+        {
+            for (int column = 0; column < 9; column++)
+            {
+                list.Add(new ChinChessModel(row, column, false));
+            }
+        }
+
+        var datas = ChinChessSerializer.Serialize(list.Where(c => !c.Data.IsEmpty).Select(c => new ChinChessInfo(c.Pos, c.Data.IsRed == true, (ChessType)c.Data.Type)).ToArray());
+
+        var model = new EndGameModel(DateTime.Now.FormatTime(), datas);
+
+        model.Steps = string.Join(',', this.CommandStack.Select(cmd => cmd.Notation));
+
+        var logPath = Path.Combine(AppStatics.ExeDirectory, "Chess.log");
+
+        File.AppendAllText(logPath, model.SerializeObject(Newtonsoft.Json.Formatting.Indented) + AppStatics.NewLineChars);
+
+        this.PublishMsg($"棋局信息已导出到{logPath}");
     }
 
     protected override void OnGameStatusChanged(EnumGameStatus newStatus)
@@ -120,7 +153,7 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
 
     protected bool TryPutToCore(ChinChessModel chess, Position to)
     {
-        var target = _canPutVisitor.GetChess(to.Row, to.Column);
+        var target = _canPutVisitor.GetChess(to);
         if (target.IsReadyToPut)
         {
             using (new MockMoveCommand(chess, target).Execute())
@@ -158,7 +191,7 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
             var command = new MoveCommand(
                                     CommandStack.Count + 1,
                                     chess.Data.IsRed == true,
-                                    chess, _canPutVisitor.GetChess(to.Row, to.Column),
+                                    chess, _canPutVisitor.GetChess(to),
                                     this.Datas,
                                     this.PushDead,
                                     this.ReturnDead
@@ -285,9 +318,14 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
         this.Log(actor, action, this.IsRedTurn);
     }
 
+
+    public ICommand ExportDataCommand { get; private set; }
+
     protected override void DisposeCore()
     {
         base.DisposeCore();
+
+        ExportDataCommand = null;
 
         this._guardVisitor.Dispose();
         this._guardVisitor = null;

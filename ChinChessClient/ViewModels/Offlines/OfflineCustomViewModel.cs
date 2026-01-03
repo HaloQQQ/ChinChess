@@ -1,6 +1,7 @@
 using ChinChessClient.Contracts.Events;
 using ChinChessCore.Contracts;
 using ChinChessCore.Models;
+using IceTea.Atom.Extensions;
 using IceTea.Pure.Contracts;
 using IceTea.Pure.Extensions;
 using IceTea.Pure.Utils;
@@ -9,7 +10,9 @@ using Prism.Commands;
 using Prism.Events;
 using Prism.Regions;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows.Input;
+using System.Xml.Linq;
 
 namespace ChinChessClient.ViewModels;
 
@@ -43,6 +46,17 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
                                         return;
                                     }
 
+                                    if (_endGameModel.IsNullOr())
+                                    {
+                                        var chessesInfo = this.Datas.Where(d => !d.Data.IsEmpty)
+                                                                .Select(m => new ChinChessInfo(m.Pos, isRed: (bool)m.Data.IsRed, chessType: (ChessType)m.Data.Type))
+                                                                .ToArray();
+
+                                        var infoStr = ChinChessSerializer.Serialize(chessesInfo);
+
+                                        _endGameModel = new EndGameModel(DateTime.Now.FormatTime(), infoStr);
+                                    }
+
                                     IsDesignOver = true;
                                 }, () => !IsDesignOver)
                                 .ObservesProperty(() => IsDesignOver);
@@ -65,13 +79,7 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
 
             IsDesignOver = true;
 
-            var chessesInfo = this.Datas.Where(d => !d.Data.IsEmpty)
-                                .Select(m => new ChinChessInfo(m.Pos, isRed: (bool)m.Data.IsRed, chessType: (ChessType)m.Data.Type))
-                                .ToArray();
-
-            var infoStr = ChinChessSerializer.Serialize(chessesInfo);
-
-            _endGameModel = new EndGameModel(name, infoStr);
+            _endGameModel.Name = name;
 
             configManager.WriteConfigNode<EndGameModel>(_endGameModel, ["EndGames", name]);
 
@@ -114,8 +122,8 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
 
             var enemyShuai = this.Datas.First(d => d.Data.Type == ChessType.帥 && d.Data.IsRed != this.IsRedTurn);
 
-            if (enemyShuai.Data.IsDangerous(this._canPutVisitor, enemyShuai.Pos, out _) 
-                || _canPutVisitor.FaceToFace() 
+            if (enemyShuai.Data.IsDangerous(this._canPutVisitor, enemyShuai.Pos, out _)
+                || _canPutVisitor.FaceToFace()
                 || this.IsGameOver())
             {
                 this.PublishMsg("不允许设计死局");
@@ -173,6 +181,19 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
 
             data.Decrease();
         }
+    }
+
+    protected override void ExportDataCommand_CommandExecute()
+    {
+        var model = new EndGameModel(_endGameModel.Name + " - " + DateTime.Now.FormatTime(), _endGameModel.Datas);
+
+        model.Steps = string.Join(',', this.CommandStack.Select(cmd => cmd.Notation));
+
+        var logPath = Path.Combine(AppStatics.ExeDirectory, "Chess.log");
+
+        File.AppendAllText(logPath, model.SerializeObject(Newtonsoft.Json.Formatting.Indented) + AppStatics.NewLineChars);
+
+        this.PublishMsg($"棋局信息已导出到{logPath}");
     }
 
     protected override void InitDatas()

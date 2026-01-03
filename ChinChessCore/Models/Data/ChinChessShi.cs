@@ -1,4 +1,5 @@
-﻿using ChinChessCore.Visitors;
+﻿using ChinChessCore.Commands;
+using ChinChessCore.Visitors;
 
 namespace ChinChessCore.Models
 {
@@ -20,9 +21,18 @@ namespace ChinChessCore.Models
                                     new Position(from.Row + 1, from.Column - 1)
                                 })
             {
-                if (this.CanPutTo(canPutToVisitor, from, item))
+                if (!this.CanPutTo(canPutToVisitor, from, item))
                 {
-                    return true;
+                    continue;
+                }
+
+                using (new MockMoveCommand(canPutToVisitor.GetChess(from), canPutToVisitor.GetChess(item))
+                            .Execute())
+                {
+                    if (!this.IsDangerous(canPutToVisitor, item, out ChinChessModel _))
+                    {
+                        return true;
+                    }
                 }
             }
 

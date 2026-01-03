@@ -20,20 +20,14 @@ namespace ChinChessCore.Visitors
 
         public IEnumerable<ChinChessModel> GetChesses() => _datas;
 
-        public ChinChessModel GetChess(int row, int column)
+        public ChinChessModel GetChess(Position pos)
         {
-            AppUtils.AssertDataValidation(
-                row.IsInRange(0, 9) && column.IsInRange(0, 8)
-                , "行列超出范围");
+            AppUtils.Assert(pos.IsValid, "行列超出范围");
 
-            return _datas[row * 9 + column];
+            return _datas[pos.Index];
         }
 
-        public ChinChessModel GetChess(Position pos) => GetChess(pos.Row, pos.Column);
-
-        public InnerChinChess GetChessData(int row, int column) => GetChess(row, column).Data;
-
-        public InnerChinChess GetChessData(Position pos) => GetChessData(pos.Row, pos.Column);
+        public InnerChinChess GetChessData(Position pos) => GetChess(pos).Data;
 
         public abstract bool Visit(ChinChessJu chess, Position from, Position to);
         public abstract bool Visit(ChinChessMa chess, Position from, Position to);
@@ -65,7 +59,7 @@ namespace ChinChessCore.Visitors
                 var currentRow = fromRow + 1;
                 while (currentRow < toRow)
                 {
-                    var currentData = this.GetChessData(currentRow, blackShuai.Column);
+                    var currentData = this.GetChessData(new Position(currentRow, blackShuai.Column));
 
                     if (!currentData.IsEmpty)
                     {

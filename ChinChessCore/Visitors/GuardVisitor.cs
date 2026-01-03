@@ -13,7 +13,8 @@ namespace ChinChessCore.Visitors
     /// <summary>
     /// 棋子 已遇到危险，防止被 杀手 击杀
     /// 1、威胁可被击杀
-    /// 2、替死
+    /// 2、自救
+    /// 3、替死
     /// </summary>
     public class GuardVisitor : VisitorBase, IGuardVisitor
     {
@@ -51,20 +52,20 @@ namespace ChinChessCore.Visitors
                 return true;
             }
 
-            var barrier = killer.GetPaoBarrier(_canPutToVisitor, killerPos, victimPos);
+            AppUtils.Assert(killer.TryGetPaoBarrier(_canPutToVisitor, killerPos, victimPos, out Position barrierPos), "威胁状态不对");
 
-            var barrierData = this.GetChessData(barrier.Row, barrier.Column);
+            var barrierData = this.GetChessData(barrierPos);
             // 支架为敌军
             if (killer.IsEnemy(barrierData))
             {
                 // 士、相、马、兵、車、炮
-                if (barrierData.CanLeave(_canPutToVisitor, barrier, killerPos.Row == victimPos.Row))
+                if (barrierData.CanLeave(_canPutToVisitor, barrierPos, killerPos.Row == victimPos.Row))
                 {
                     return true;
                 }
             }
 
-            return this.FenceFromJuOrPao(killer, barrier, victimPos);
+            return this.FenceFromJuOrPao(killer, killerPos, victimPos);
         }
 
         /// <summary>
@@ -89,18 +90,21 @@ namespace ChinChessCore.Visitors
             var pos = new Position(currentRow, currentColumn);
 
             #region 士
-            while (fromPos != pos && chess.IsPosValid_Rel(ChessType.仕, pos))
+            while (fromPos != pos)
             {
-                if (this.ProtectByShield(chess, pos, toPos, ChessType.仕, new[]
-                        {
+                if (chess.IsPosValid_Abs(ChessType.仕, pos))
+                {
+                    if (this.ProtectByShield(chess, pos, toPos, ChessType.仕, new[]
+                            {
                             new Position(pos.Row - 1, pos.Column - 1),
                             new Position(pos.Row - 1, pos.Column + 1),
                             new Position(pos.Row + 1, pos.Column - 1),
                             new Position(pos.Row + 1, pos.Column + 1)
                         })
-                    )
-                {
-                    return true;
+                        )
+                    {
+                        return true;
+                    }
                 }
 
                 pos = new Position(currentRow += rowStep, currentColumn += columnStep);
@@ -111,17 +115,20 @@ namespace ChinChessCore.Visitors
             currentRow = toRow + rowStep; currentColumn = toColumn + columnStep;
             pos = new Position(currentRow, currentColumn);
 
-            while (fromPos != pos && chess.IsPosValid_Rel(ChessType.相, pos))
+            while (fromPos != pos)
             {
-                if (this.ProtectByShield(chess, pos, toPos, ChessType.相, new[]
+                if (chess.IsPosValid_Rel(ChessType.相, pos))
                 {
-                new Position(pos.Row - 2, pos.Column - 2),
-                new Position(pos.Row - 2, pos.Column + 2),
-                new Position(pos.Row + 2, pos.Column - 2),
-                new Position(pos.Row + 2, pos.Column + 2)
-            }))
-                {
-                    return true;
+                    if (this.ProtectByShield(chess, pos, toPos, ChessType.相, new[]
+                    {
+                    new Position(pos.Row - 2, pos.Column - 2),
+                    new Position(pos.Row - 2, pos.Column + 2),
+                    new Position(pos.Row + 2, pos.Column - 2),
+                    new Position(pos.Row + 2, pos.Column + 2)
+                }))
+                    {
+                        return true;
+                    }
                 }
 
                 pos = new Position(currentRow += rowStep, currentColumn += columnStep);
@@ -198,7 +205,7 @@ namespace ChinChessCore.Visitors
                                 return false;
                             }
 
-                            if (!this.GetChessData(currentRow, column).IsEmpty)
+                            if (!this.GetChessData(currentPos).IsEmpty)
                             {
                                 break;
                             }
@@ -209,8 +216,8 @@ namespace ChinChessCore.Visitors
                         if (chess.IsEnemy(this, currentPos, ChessType.車 | ChessType.炮))
                         {
                             using (new MockMoveCommand(
-                                    this.GetChess(currentRow, column),
-                                    this.GetChess(pos.Row, pos.Column)
+                                    this.GetChess(currentPos),
+                                    this.GetChess(pos)
                                 ).Execute()
                             )
                             {
@@ -219,7 +226,7 @@ namespace ChinChessCore.Visitors
                                     return false;
                                 }
 
-                                if (!this.GetChessData(toPos.Row, toPos.Column).IsDangerous(_canPutToVisitor, toPos, out _))
+                                if (!this.GetChessData(toPos).IsDangerous(_canPutToVisitor, toPos, out _))
                                 {
                                     return true;
                                 }
@@ -247,7 +254,7 @@ namespace ChinChessCore.Visitors
                                 return false;
                             }
 
-                            if (!this.GetChessData(row, currentColumn).IsEmpty)
+                            if (!this.GetChessData(currentPos).IsEmpty)
                             {
                                 break;
                             }
@@ -258,8 +265,8 @@ namespace ChinChessCore.Visitors
                         if (chess.IsEnemy(this, currentPos, ChessType.車 | ChessType.炮))
                         {
                             using (new MockMoveCommand(
-                                    this.GetChess(row, currentColumn),
-                                    this.GetChess(pos.Row, pos.Column)
+                                    this.GetChess(currentPos),
+                                    this.GetChess(pos)
                                 ).Execute()
                             )
                             {
@@ -268,7 +275,7 @@ namespace ChinChessCore.Visitors
                                     return false;
                                 }
 
-                                if (!this.GetChessData(toPos.Row, toPos.Column).IsDangerous(_canPutToVisitor, toPos, out _))
+                                if (!this.GetChessData(toPos).IsDangerous(_canPutToVisitor, toPos, out _))
                                 {
                                     return true;
                                 }
@@ -286,7 +293,7 @@ namespace ChinChessCore.Visitors
             #region 炮  抽
             if (chess.Type == ChessType.炮)
             {
-                if(_canPutToVisitor.GetChessData(fromPos.Row, fromPos.Column)
+                if (_canPutToVisitor.GetChessData(fromPos)
                     .CanLeave(_canPutToVisitor, fromPos, fromPos.Row == toPos.Row))
                 {
                     return true;
@@ -309,7 +316,8 @@ namespace ChinChessCore.Visitors
                 return true;
             }
 
-            var barrierPos = killer.GetMaBarrier(killerPos, victimPos);
+            AppUtils.Assert(!killer.TryGetMaBarrier(this, killerPos, victimPos, out Position barrierPos),
+                 "已经存在蹩马腿的棋子了");
 
             #region 士
             if (this.ProtectByShield(killer, barrierPos, victimPos, ChessType.仕, new[] {
@@ -383,7 +391,7 @@ namespace ChinChessCore.Visitors
                         return false;
                     }
 
-                    if (!this.GetChessData(currentRow, currentColumn).IsEmpty)
+                    if (!this.GetChessData(currentPos).IsEmpty)
                     {
                         break;
                     }
@@ -394,8 +402,8 @@ namespace ChinChessCore.Visitors
                 if (killer.IsEnemy(this, currentPos, ChessType.車 | ChessType.炮))
                 {
                     using (new MockMoveCommand(
-                            this.GetChess(currentRow, currentColumn),
-                            this.GetChess(to.Row, to.Column)
+                            this.GetChess(currentPos),
+                            this.GetChess(to)
                         ).Execute()
                     )
                     {
@@ -404,7 +412,7 @@ namespace ChinChessCore.Visitors
                             return false;
                         }
 
-                        if (!this.GetChessData(victimPos.Row, victimPos.Column).IsDangerous(_canPutToVisitor, victimPos, out _))
+                        if (!this.GetChessData(victimPos).IsDangerous(_canPutToVisitor, victimPos, out _))
                         {
                             return true;
                         }
@@ -430,7 +438,8 @@ namespace ChinChessCore.Visitors
                 return true;
             }
 
-            var barrierPos = killer.GetXiangBarrier(killerPos, victimPos);
+            AppUtils.Assert(!killer.TryGetXiangBarrier(this, killerPos, victimPos, out Position barrierPos),
+                "已经存在蹩象眼的棋子了");
 
             #region 士
             if (this.ProtectByShield(killer, barrierPos, victimPos, ChessType.仕, new[] {
@@ -504,7 +513,7 @@ namespace ChinChessCore.Visitors
                         return false;
                     }
 
-                    if (!this.GetChessData(currentRow, currentColumn).IsEmpty)
+                    if (!this.GetChessData(currentPos).IsEmpty)
                     {
                         break;
                     }
@@ -515,8 +524,8 @@ namespace ChinChessCore.Visitors
                 if (killer.IsEnemy(this, currentPos, ChessType.車 | ChessType.炮))
                 {
                     using (new MockMoveCommand(
-                            this.GetChess(currentRow, currentColumn),
-                            this.GetChess(to.Row, to.Column)
+                            this.GetChess(currentPos),
+                            this.GetChess(to)
                         ).Execute()
                     )
                     {
@@ -525,7 +534,7 @@ namespace ChinChessCore.Visitors
                             return false;
                         }
 
-                        if (!this.GetChessData(victimPos.Row, victimPos.Column).IsDangerous(_canPutToVisitor, victimPos, out _))
+                        if (!this.GetChessData(victimPos).IsDangerous(_canPutToVisitor, victimPos, out _))
                         {
                             return true;
                         }
@@ -578,8 +587,8 @@ namespace ChinChessCore.Visitors
                 if (killer.TryPutToIfIsEnemy(_canPutToVisitor, item, guardToPos, chessType))
                 {
                     using (new MockMoveCommand(
-                                this.GetChess(item.Row, item.Column),
-                                this.GetChess(guardToPos.Row, guardToPos.Column)
+                                this.GetChess(item),
+                                this.GetChess(guardToPos)
                             ).Execute()
                         )
                     {
@@ -612,8 +621,8 @@ namespace ChinChessCore.Visitors
                 }
 
                 using (new MockMoveCommand(
-                                this.GetChess(guard.Pos.Row, guard.Pos.Column),
-                                this.GetChess(killerPos.Row, killerPos.Column)
+                                this.GetChess(guard.Pos),
+                                this.GetChess(killerPos)
                             ).Execute()
                         )
                 {
@@ -668,11 +677,16 @@ namespace ChinChessCore.Visitors
                 return false;
             }
 
-            var targetData = this.GetChessData(victimPos.Row, victimPos.Column);
+            var targetData = this.GetChessData(victimPos);
 
             bool prevent = killer.IsEmpty || !killer.IsEnemy(targetData);
 
             if (prevent)
+            {
+                return false;
+            }
+
+            if (targetData.CanLeave(_canPutToVisitor, victimPos, killerPos.Row == victimPos.Row))
             {
                 return false;
             }

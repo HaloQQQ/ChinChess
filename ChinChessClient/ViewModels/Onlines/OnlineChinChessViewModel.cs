@@ -153,7 +153,7 @@ internal class OnlineChinChessViewModel : OnlineChinChessViewModelBase, IBackup
     {
         if (this.TryPutToCore(chess, to))
         {
-            _canPutVisitor.GetChess(to.Row, to.Column).Data = chess.Data;
+            _canPutVisitor.GetChess(to).Data = chess.Data;
             chess.Data = InnerChinChess.Empty;
 
             return true;

@@ -1,11 +1,14 @@
 ﻿using ChinChessCore.Commands;
 using ChinChessCore.Contracts;
 using ChinChessCore.Models;
+using IceTea.Atom.Extensions;
+using IceTea.Pure.Contracts;
 using IceTea.Pure.Extensions;
 using IceTea.Wpf.Atom.Utils;
 using IceTea.Wpf.Atom.Utils.HotKey.App;
 using Prism.Commands;
 using Prism.Regions;
+using System.IO;
 using System.Windows.Input;
 
 namespace ChinChessClient.ViewModels;
@@ -50,6 +53,22 @@ internal class OfflineAnswerViewModel : OfflineChinChessViewModelBase
             .ObservesProperty(() => Status);
     }
 
+    private EndGameModel _endGameModel;
+
+    protected override void ExportDataCommand_CommandExecute()
+    {
+        var model = _endGameModel;
+        model.Name = model.Name + " - " + DateTime.Now.FormatTime();
+
+        model.Steps = string.Join(',', this.CommandStack.Select(cmd => cmd.Notation));
+
+        var logPath = Path.Combine(AppStatics.ExeDirectory, "Chess.log");
+
+        File.AppendAllText(logPath, model.SerializeObject(Newtonsoft.Json.Formatting.Indented) + AppStatics.NewLineChars);
+
+        this.PublishMsg($"棋局信息已导出到{logPath}");
+    }
+
 
     private int _currentStep;
 
@@ -92,6 +111,8 @@ internal class OfflineAnswerViewModel : OfflineChinChessViewModelBase
 
         if (parameters.TryGetValue<EndGameModel>("EndGame", out EndGameModel data))
         {
+            _endGameModel = data;
+
             this._originDatas = ChinChessSerializer.Deserialize(data.Datas);
 
             this._movePaths = data.Steps.Split(",").ToList();

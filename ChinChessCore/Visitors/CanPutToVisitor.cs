@@ -12,9 +12,9 @@ namespace ChinChessCore.Visitors
     /// <summary>
     /// 检测吃子或移动
     /// </summary>
-    public class CanPutVisitor : VisitorBase, ICanPutToVisitor
+    public class CanPutToVisitor : VisitorBase, ICanPutToVisitor
     {
-        public CanPutVisitor(IList<ChinChessModel> datas) : base(datas) { }
+        public CanPutToVisitor(IList<ChinChessModel> datas) : base(datas) { }
 
         public override bool Visit(ChinChessJu chess, Position from, Position to)
         {
@@ -42,7 +42,7 @@ namespace ChinChessCore.Visitors
             var currentPos = new Position(currentRow, currentColumn);
             while (currentPos != to)
             {
-                if (!this.GetChessData(currentRow, currentColumn).IsEmpty)
+                if (!this.GetChessData(currentPos).IsEmpty)
                 {
                     return false;
                 }
@@ -83,10 +83,10 @@ namespace ChinChessCore.Visitors
             var current = new Position(currentRow, currentColumn);
             while (current != to)
             {
-                if (!this.GetChessData(currentRow, currentColumn).IsEmpty)
+                if (!this.GetChessData(current).IsEmpty)
                 {
                     // 吃空子
-                    if (this.GetChessData(toRow, toColumn).IsEmpty)
+                    if (this.GetChessData(to).IsEmpty)
                     {
                         return false;
                     }
@@ -175,9 +175,8 @@ namespace ChinChessCore.Visitors
                 return false;
             }
 
-            var barrierPos = chess.GetMaBarrier(from, to);
 
-            return this.GetChessData(barrierPos.Row, barrierPos.Column).IsEmpty;
+            return !chess.TryGetMaBarrier(this, from, to, out _);
         }
 
         public override bool Visit(ChinChessXiang chess, Position from, Position to)
@@ -197,9 +196,7 @@ namespace ChinChessCore.Visitors
                 return false;
             }
 
-            var barrierPos = chess.GetXiangBarrier(from, to);
-
-            return this.GetChessData(barrierPos.Row, barrierPos.Column).IsEmpty;
+            return !chess.TryGetXiangBarrier(this, from, to, out _);
         }
 
         public override bool Visit(ChinChessShi chess, Position from, Position to)
@@ -252,12 +249,11 @@ namespace ChinChessCore.Visitors
                 return false;
             }
 
-            var fromData = this.GetChessData(from.Row, from.Column);
+            var fromData = this.GetChessData(from);
 
             AppUtils.AssertDataValidation(fromData == chess, $"{chess.Type}不在{from.ToString()}");
 
-            int toRow = to.Row, toColumn = to.Column;
-            var targetData = this.GetChessData(toRow, toColumn);
+            var targetData = this.GetChessData(to);
 
             bool prevent = fromData.IsEmpty
                             || (!targetData.IsEmpty && fromData.IsRed == targetData.IsRed);

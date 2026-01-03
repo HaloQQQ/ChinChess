@@ -1,4 +1,5 @@
-﻿using ChinChessCore.Visitors;
+﻿using ChinChessCore.Commands;
+using ChinChessCore.Visitors;
 
 namespace ChinChessCore.Models
 {
@@ -19,18 +20,34 @@ namespace ChinChessCore.Models
             var rowStep = isHorizontal ? 1 : 0;
             var columnStep = isHorizontal ? 0 : 1;
 
-            foreach (var item in new[] {
-                                    new Position(from.Row + rowStep, from.Column + columnStep),
-                                    new Position(from.Row - rowStep, from.Column - columnStep)
-                                })
-            {
-                if (this.CanPutTo(canPutToVisitor, from, item))
-                {
-                    return true;
-                }
-            }
+            return TryLeave(rowStep, columnStep) || TryLeave(-rowStep, -columnStep);
 
-            return false;
+            bool TryLeave(int __rowStep, int __columnStep)
+            {
+                Position currentPos = new Position(from.Row + __rowStep, from.Column + __columnStep);
+
+                while (currentPos.IsValid)
+                {
+                    if (!canPutToVisitor.GetChessData(currentPos).IsEmpty)
+                    {
+                        break;
+                    }
+
+                    using (new MockMoveCommand(canPutToVisitor.GetChess(from), canPutToVisitor.GetChess(currentPos))
+                                .Execute()
+                          )
+                    {
+                        if (!this.IsDangerous(canPutToVisitor, currentPos, out _))
+                        {
+                            return true;
+                        }
+                    }
+
+                    currentPos = new Position(from.Row + __rowStep, from.Column + __columnStep);
+                }
+
+                return false;
+            }
         }
     }
 }

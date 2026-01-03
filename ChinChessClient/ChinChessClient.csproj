@@ -55,6 +55,8 @@
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <ProjectReference Include="..\..\IceTea\IceTea.Wpf.Core\IceTea.Wpf.Core.csproj" />
+    <ProjectReference Include="..\ChinChessCore\ChinChessCore.csproj" />
     <ProjectReference Include="..\ChinChessServer\ChinChessServer.csproj" />
     <Resource Include="Resources\Images\山水之间.jpeg" />
     <Resource Include="Resources\Images\暮山.jpeg" />

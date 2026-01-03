@@ -14,6 +14,11 @@
             ItemsSource="{Binding CommandStack}"
             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
             VirtualizingPanel.IsVirtualizing="True">
+            <ListBox.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Command="{Binding PlacementTarget.DataContext.ExportDataCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Header="导出棋局" />
+                </ContextMenu>
+            </ListBox.ContextMenu>
             <ListBox.Resources>
                 <Style TargetType="TextBlock">
                     <Setter Property="Foreground" Value="Black" />
