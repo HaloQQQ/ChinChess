@@ -1,6 +1,7 @@
-﻿using ChinChessCore.Visitors;
+﻿using ChinChessCore.Contracts;
+using ChinChessCore.Visitors;
 using IceTea.Pure.BaseModels;
-using IceTea.Pure.Extensions;
+using IceTea.Pure.Utils;
 using System;
 using System.Diagnostics;
 
@@ -10,7 +11,7 @@ using System.Diagnostics;
 namespace ChinChessCore.Models
 {
     [DebuggerDisplay("{ToolTip}")]
-    public class InnerChinChess : NotifyBase
+    public class InnerChinChess : NotifyBase, IChineseChess
     {
         public static InnerChinChess Empty = new InnerChinChess();
 
@@ -33,6 +34,12 @@ namespace ChinChessCore.Models
 
         public bool? IsRed { get; }
 
+        /// <summary>
+        /// 只能由<see cref="ChinChessModel"/>设置
+        /// </summary>
+        public Position CurPos { get; internal set; }
+
+
         private Position _originPos = new Position(-1, -1);
         public Position OriginPos
         {
@@ -47,25 +54,32 @@ namespace ChinChessCore.Models
             set => SetProperty<bool>(ref _hasNotUsed, value);
         }
 
-        #region IChineseChess
-        public bool CanPutTo(ICanPutToVisitor canPutToVisitor, Position from, Position to)
-            => this.Accept(canPutToVisitor, from, to);
+        internal virtual bool IsAllowTo(Position toPos)
+        {
+            AppUtils.AssertDataValidation(toPos.IsValid, "位置超出允许范围");
 
-        public bool PreMove(IPreMoveVisitor preMoveVisitor, Position from)
-            => this.Accept(preMoveVisitor, from, default);
+            return true;
+        }
+
+        #region IChineseChess
+        public bool CanPutTo(ICanPutToVisitor canPutToVisitor, Position to)
+            => this.Accept(canPutToVisitor, to);
+
+        public bool PreMove(IPreMoveVisitor preMoveVisitor)
+            => this.Accept(preMoveVisitor, default);
 
         /// <summary>
-        /// 1、威胁可被击杀
-        /// 2、替死
+        /// 1、自救
+        /// 2、威胁可被击杀
+        /// 3、替死
         /// </summary>
         /// <param name="guardVisitor"></param>
-        /// <param name="killerPos"></param>
         /// <param name="to"></param>
         /// <returns></returns>
-        public bool CanBeProtected(IGuardVisitor guardVisitor, Position killerPos, Position to)
-            => this.Accept(guardVisitor, killerPos, to);
+        public bool CanBeSaveFromMe(IGuardVisitor guardVisitor, Position to)
+            => this.Accept(guardVisitor, to);
 
-        public bool IsDangerous(ICanPutToVisitor canPutToVisitor, Position selfPos, out ChinChessModel killer)
+        public bool IsDangerous(ICanPutToVisitor canPutToVisitor, out ChinChessModel killer)
         {
             if (this.IsEmpty)
             {
@@ -74,6 +88,7 @@ namespace ChinChessCore.Models
                 return false;
             }
 
+            Position selfPos = this.CurPos;
             int toRow = selfPos.Row, toColumn = selfPos.Column;
 
             #region 兵
@@ -84,7 +99,7 @@ namespace ChinChessCore.Models
                                 new Position(toRow, toColumn + 1)
                             })
             {
-                if (TryPutToIfIsEnemy(canPutToVisitor, item, selfPos, ChessType.兵))
+                if (TryPutFromIfEnemy(canPutToVisitor, item, ChessType.兵))
                 {
                     killer = canPutToVisitor.GetChess(item);
 
@@ -105,7 +120,7 @@ namespace ChinChessCore.Models
                                 new Position(toRow + 1, toColumn + 2)
                             })
             {
-                if (TryPutToIfIsEnemy(canPutToVisitor, item, selfPos, ChessType.馬))
+                if (TryPutFromIfEnemy(canPutToVisitor, item, ChessType.馬))
                 {
                     killer = canPutToVisitor.GetChess(item);
 
@@ -217,7 +232,7 @@ namespace ChinChessCore.Models
                                 new Position(toRow + 2, toColumn + 2)
                             })
             {
-                if (TryPutToIfIsEnemy(canPutToVisitor, item, selfPos, ChessType.相))
+                if (TryPutFromIfEnemy(canPutToVisitor, item, ChessType.相))
                 {
                     killer = canPutToVisitor.GetChess(item);
 
@@ -234,7 +249,7 @@ namespace ChinChessCore.Models
                                 new Position(toRow + 1, toColumn + 1)
                             })
             {
-                if (TryPutToIfIsEnemy(canPutToVisitor, item, selfPos, ChessType.仕))
+                if (TryPutFromIfEnemy(canPutToVisitor, item, ChessType.仕))
                 {
                     killer = canPutToVisitor.GetChess(item);
 
@@ -251,7 +266,7 @@ namespace ChinChessCore.Models
                                 new Position(toRow + 1, toColumn)
                             })
             {
-                if (TryPutToIfIsEnemy(canPutToVisitor, item, selfPos, ChessType.帥))
+                if (TryPutFromIfEnemy(canPutToVisitor, item, ChessType.帥))
                 {
                     killer = canPutToVisitor.GetChess(item);
 
@@ -264,44 +279,39 @@ namespace ChinChessCore.Models
 
             return false;
         }
-        #endregion
 
         /// <summary>
         /// 离开此地，到不危险的地方
         /// </summary>
         /// <param name="canPutToVisitor"></param>
+        /// <param name="leaveInHorizontal">离开方向是水平方向？null则随便都可以；这个给炮架使用</param>
         /// <param name="from"></param>
-        /// <param name="isHorizontal">杀手和被害者是否同一行</param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public virtual bool CanLeave(ICanPutToVisitor canPutToVisitor, Position from, bool isHorizontal = true)
+        public virtual bool CanLeave(ICanPutToVisitor canPutToVisitor, bool? leaveInHorizontal = null)
             => throw new NotImplementedException();
 
         /// <summary>
-        /// chessType是否为敌方<see cref="chessType"/>, 并且可以from=>to
+        /// chessType是否为敌方<see cref="chessType"/>, 并且可以from=>cur
         /// </summary>
         /// <param name="canPutToVisitor"></param>
         /// <param name="from"></param>
-        /// <param name="to"></param>
         /// <param name="chessType"></param>
         /// <returns></returns>
-        public bool TryPutToIfIsEnemy(ICanPutToVisitor canPutToVisitor, Position from, Position to, ChessType chessType)
+        public bool TryPutFromIfEnemy(ICanPutToVisitor canPutToVisitor, Position from, ChessType chessType)
         {
             if (IsEnemy(canPutToVisitor, from, chessType))
             {
                 var data = canPutToVisitor.GetChessData(from);
 
-                if (data.CanPutTo(canPutToVisitor, from, to))
-                {
-                    return true;
-                }
+                return data.CanPutTo(canPutToVisitor, this.CurPos);
             }
 
             return false;
         }
 
         /// <summary>
-        /// 当前点是否为敌方<see cref="chessType"/>中的一个
+        /// position是否为敌方<see cref="chessType"/>中的一个
         /// </summary>
         /// <param name="visitor"></param>
         /// <param name="position"></param>
@@ -309,14 +319,14 @@ namespace ChinChessCore.Models
         /// <returns></returns>
         public bool IsEnemy(IVisitor visitor, Position position, ChessType chessType)
         {
-            if (!IsPosValid_Abs(chessType, position, true))
+            if (!IsPosValid(chessType, position, true))
             {
                 return false;
             }
 
             var data = visitor.GetChessData(position);
 
-            return this.IsEnemy(data) && ((data.Type & chessType) == data.Type);
+            return (this.IsEnemy(data) == true) && ((data.Type & chessType) == data.Type);
         }
 
         /// <summary>
@@ -324,152 +334,49 @@ namespace ChinChessCore.Models
         /// </summary>
         /// <param name="target"></param>
         /// <returns></returns>
-        public bool IsEnemy(InnerChinChess target)
-            => !target.IsEmpty && this.IsRed != target.IsRed;
+        public bool? IsEnemy(InnerChinChess target)
+        {
+            if (this.IsEmpty || target.IsEmpty)
+            {
+                return null;
+            }
 
+            return this.IsRed != target.IsRed;
+        }
+        #endregion
+
+        /// <summary>
+        /// 检查自身是否可放置到pos
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <returns></returns>
         public bool IsPosValid(Position pos)
-            => this.IsPosValid_Abs((ChessType)this.Type, pos, false);
+            => this.IsPosValid((ChessType)this.Type, pos, false);
 
-        public bool IsPosValid_Rel(ChessType chessType, Position pos, bool isEnemy = true)
+        /// <summary>
+        /// 检查isEnemy方的chessType是否可以放置在pos
+        /// </summary>
+        /// <param name="chessType"></param>
+        /// <param name="pos"></param>
+        /// <param name="isEnemy"></param>
+        /// <returns></returns>
+        public bool IsPosValid(ChessType chessType, Position pos, bool isEnemy = true)
         {
             if (chessType != ChessType.帥 && this.IsJieQi && !this.IsBack)
             {
-                return pos.Row.IsInRange(0, 9) && pos.Column.IsInRange(0, 8);
+                return pos.IsValid;
             }
 
-            Predicate<Position> predicate = null;
+            bool isRed = isEnemy ? !(bool)this.IsRed : (bool)this.IsRed;
 
-            switch (chessType)
-            {
-                case ChessType.兵:
-                    if (this.IsRed == isEnemy)
-                    {
-                        predicate = p => p.Row.IsInRange(3, 9) && p.Column.IsInRange(0, 8);
-                    }
-                    else
-                    {
-                        predicate = p => p.Row.IsInRange(0, 6) && p.Column.IsInRange(0, 8);
-                    }
-                    break;
-                case ChessType.相:
-                    if (this.IsRed == isEnemy)
-                    {
-                        predicate = p => p.Row.IsInRange(0, 4) && p.Column.IsInRange(0, 8);
-                    }
-                    else
-                    {
-                        predicate = p => p.Row.IsInRange(5, 9) && p.Column.IsInRange(0, 8);
-                    }
-                    break;
-                case ChessType.仕:
-                case ChessType.帥:
-                    if (this.IsRed == isEnemy)
-                    {
-                        predicate = p => p.Row.IsInRange(0, 2) && p.Column.IsInRange(3, 5);
-                    }
-                    else
-                    {
-                        predicate = p => p.Row.IsInRange(7, 9) && p.Column.IsInRange(3, 5);
-                    }
-                    break;
-                default:
-                    predicate = p => p.Row.IsInRange(0, 9) && p.Column.IsInRange(0, 8);
-                    break;
-            }
-
-            return predicate(pos);
+            return new ChinChessInfo(pos, isRed, chessType).IsValidPos();
         }
 
-        public bool IsPosValid_Abs(ChessType chessType, Position pos, bool isEnemy = true)
-        {
-            if (chessType != ChessType.帥 && this.IsJieQi && !this.IsBack)
-            {
-                return pos.Row.IsInRange(0, 9) && pos.Column.IsInRange(0, 8);
-            }
-
-            Predicate<Position> predicate = null;
-
-            switch (chessType)
-            {
-                case ChessType.兵:
-                    if (this.IsRed == isEnemy)
-                    {
-                        predicate = p => p.Row.IsInRange(5, 9) && p.Column.IsInRange(0, 8)
-                                        || p.IsIn(new[] {
-                                                new Position(3, 0), new Position(3, 2),
-                                                new Position(3, 4), new Position(3, 6),
-                                                new Position(3, 8),
-                                                new Position(4, 0), new Position(4, 2),
-                                                new Position(4, 4), new Position(4, 6),
-                                                new Position(4, 8) });
-                    }
-                    else
-                    {
-                        predicate = p => p.Row.IsInRange(0, 4) && p.Column.IsInRange(0, 8)
-                                         || p.IsIn(new[] {
-                                                new Position(6, 0), new Position(6, 2),
-                                                new Position(6, 4), new Position(6, 6),
-                                                new Position(6, 8),
-                                                new Position(5, 0), new Position(5, 2),
-                                                new Position(5, 4), new Position(5, 6),
-                                                new Position(5, 8) });
-                    }
-                    break;
-                case ChessType.相:
-                    if (this.IsRed == isEnemy)
-                    {
-                        predicate = p => p.IsIn(new[] {
-                                            new Position(0, 2), new Position(0, 6),
-                                            new Position(2, 0), new Position(2, 4), new Position(2, 8),
-                                            new Position(4, 2), new Position(4, 6)});
-                    }
-                    else
-                    {
-                        predicate = p => p.IsIn(new[] {
-                                            new Position(9, 2), new Position(9, 6),
-                                            new Position(7, 0), new Position(7, 4), new Position(7, 8),
-                                            new Position(5, 2), new Position(5, 6)});
-                    }
-                    break;
-                case ChessType.仕:
-                    if (this.IsRed == isEnemy)
-                    {
-                        predicate = p => p.IsIn(new[] {
-                                            new Position(0, 3), new Position(0, 5),
-                                            new Position(1, 4),
-                                            new Position(2, 3), new Position(2, 5)});
-                    }
-                    else
-                    {
-                        predicate = p => p.IsIn(new[] {
-                                            new Position(9, 3), new Position(9, 5),
-                                            new Position(8, 4),
-                                            new Position(7, 3), new Position(7, 5)});
-                    }
-                    break;
-                case ChessType.帥:
-                    if (this.IsRed == isEnemy)
-                    {
-                        predicate = p => p.Row.IsInRange(0, 2) && p.Column.IsInRange(3, 5);
-                    }
-                    else
-                    {
-                        predicate = p => p.Row.IsInRange(7, 9) && p.Column.IsInRange(3, 5);
-                    }
-                    break;
-                default:
-                    predicate = p => p.Row.IsInRange(0, 9) && p.Column.IsInRange(0, 8);
-                    break;
-            }
-
-            return predicate(pos);
-        }
-
-        public virtual bool Accept(IVisitor visitor, Position from, Position to) => throw new NotImplementedException();
+        public virtual bool Accept(IVisitor visitor, Position to) => throw new NotImplementedException();
 
         public string ToolTip => this.ToString();
 
         public override string ToString()
-            => $"IsRed={IsRed}, Type={Type}, IsBack={IsBack}, IsJieQi={IsJieQi}, HasNotUsed={HasNotUsed}";
+            => $"Pos={CurPos}, IsRed={IsRed}, Type={Type}, IsBack={IsBack}, IsJieQi={IsJieQi}, HasNotUsed={HasNotUsed}";
     }
 }

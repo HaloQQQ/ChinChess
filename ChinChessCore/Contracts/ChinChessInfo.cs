@@ -1,4 +1,5 @@
 ﻿using ChinChessCore.Models;
+using IceTea.Pure.Extensions;
 using System;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -23,6 +24,79 @@ namespace ChinChessCore.Contracts
         public bool IsRed { get; }
 
         public ChessType ChessType { get; }
+
+        public bool IsValidPos()
+        {
+            Position p = this.Pos;
+            switch (this.ChessType)
+            {
+                case ChessType.兵:
+                    if (this.IsRed)
+                    {
+                        return p.Row.IsInRange(0, 4) && p.Column.IsInRange(0, 8)
+                                         || p.IsIn(new[] {
+                                                new Position(6, 0), new Position(6, 2),
+                                                new Position(6, 4), new Position(6, 6),
+                                                new Position(6, 8),
+                                                new Position(5, 0), new Position(5, 2),
+                                                new Position(5, 4), new Position(5, 6),
+                                                new Position(5, 8)
+                                         });
+                    }
+                    else
+                    {
+                        return p.Row.IsInRange(5, 9) && p.Column.IsInRange(0, 8)
+                                        || p.IsIn(new[] {
+                                                new Position(3, 0), new Position(3, 2),
+                                                new Position(3, 4), new Position(3, 6),
+                                                new Position(3, 8),
+                                                new Position(4, 0), new Position(4, 2),
+                                                new Position(4, 4), new Position(4, 6),
+                                                new Position(4, 8) });
+                    }
+                case ChessType.相:
+                    if (this.IsRed)
+                    {
+                        return p.IsIn(new[] {
+                                            new Position(9, 2), new Position(9, 6),
+                                            new Position(7, 0), new Position(7, 4), new Position(7, 8),
+                                            new Position(5, 2), new Position(5, 6)});
+                    }
+                    else
+                    {
+                        return p.IsIn(new[] {
+                                            new Position(0, 2), new Position(0, 6),
+                                            new Position(2, 0), new Position(2, 4), new Position(2, 8),
+                                            new Position(4, 2), new Position(4, 6)});
+                    }
+                case ChessType.仕:
+                    if (this.IsRed)
+                    {
+                        return p.IsIn(new[] {
+                                            new Position(9, 3), new Position(9, 5),
+                                            new Position(8, 4),
+                                            new Position(7, 3), new Position(7, 5)});
+                    }
+                    else
+                    {
+                        return p.IsIn(new[] {
+                                            new Position(0, 3), new Position(0, 5),
+                                            new Position(1, 4),
+                                            new Position(2, 3), new Position(2, 5)});
+                    }
+                case ChessType.帥:
+                    if (this.IsRed)
+                    {
+                        return p.Row.IsInRange(7, 9) && p.Column.IsInRange(3, 5);
+                    }
+                    else
+                    {
+                        return p.Row.IsInRange(0, 2) && p.Column.IsInRange(3, 5);
+                    }
+                default:
+                    return p.Row.IsInRange(0, 9) && p.Column.IsInRange(0, 8);
+            }
+        }
 
         public static ChinChessInfo Load(string info)
         {

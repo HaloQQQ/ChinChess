@@ -1,5 +1,4 @@
-﻿using ChinChessCore.Commands;
-using ChinChessCore.Visitors;
+﻿using ChinChessCore.Visitors;
 
 namespace ChinChessCore.Models
 {
@@ -12,42 +11,55 @@ namespace ChinChessCore.Models
 
         public ChinChessJu(bool isRed, bool isJieQi, bool isBack) : base(isRed, ChessType.車, isJieQi, isBack) { }
 
-        public override bool Accept(IVisitor visitor, Position from, Position to)
-            => visitor.Visit(this, from, to);
+        public override bool Accept(IVisitor visitor, Position to)
+            => visitor.Visit(this, to);
 
-        public override bool CanLeave(ICanPutToVisitor canPutToVisitor, Position from, bool isHorizontal = true)
+        public override bool CanLeave(ICanPutToVisitor canPutToVisitor, bool? leaveInHorizontal = null)
         {
-            var rowStep = isHorizontal ? 1 : 0;
-            var columnStep = isHorizontal ? 0 : 1;
-
-            return TryLeave(rowStep, columnStep) || TryLeave(-rowStep, -columnStep);
-
-            bool TryLeave(int __rowStep, int __columnStep)
+            Position from = this.CurPos;
+            foreach (var item in new[] {
+                                    new Position(from.Row + 1, from.Column),
+                                    new Position(from.Row - 1, from.Column),
+                                    new Position(from.Row, from.Column + 1),
+                                    new Position(from.Row, from.Column - 1)
+                                })
             {
-                Position currentPos = new Position(from.Row + __rowStep, from.Column + __columnStep);
-
-                while (currentPos.IsValid)
+                if (leaveInHorizontal != null)
                 {
-                    if (!canPutToVisitor.GetChessData(currentPos).IsEmpty)
+                    if (leaveInHorizontal == true)
                     {
-                        break;
-                    }
-
-                    using (new MockMoveCommand(canPutToVisitor.GetChess(from), canPutToVisitor.GetChess(currentPos))
-                                .Execute()
-                          )
-                    {
-                        if (!this.IsDangerous(canPutToVisitor, currentPos, out _))
+                        if (this.CurPos.Column == item.Column)
                         {
-                            return true;
+                            continue;
                         }
                     }
-
-                    currentPos = new Position(from.Row + __rowStep, from.Column + __columnStep);
+                    else
+                    {
+                        if (this.CurPos.Row == item.Row)
+                        {
+                            continue;
+                        }
+                    }
                 }
 
+                if (this.CanPutTo(canPutToVisitor, item))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+
+        internal override bool IsAllowTo(Position toPos)
+        {
+            if (!base.IsAllowTo(toPos))
+            {
                 return false;
             }
+
+            return this.CurPos != toPos && (this.CurPos.Row == toPos.Row || this.CurPos.Column == toPos.Column);
         }
     }
 }

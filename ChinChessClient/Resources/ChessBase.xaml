@@ -82,8 +82,6 @@
         x:Key="GiveUpButton"
         BasedOn="{StaticResource FunctionButton}"
         TargetType="Button">
-        <Setter Property="FontFamily" Value="{StaticResource Iconfont}" />
-
         <Setter Property="Command" Value="{Binding GiveUpCommand}" />
         <Setter Property="Content" Value="&#xe60e;" />
 
@@ -94,8 +92,6 @@
         x:Key="HeQiButton"
         BasedOn="{StaticResource FunctionButton}"
         TargetType="Button">
-        <Setter Property="FontFamily" Value="{StaticResource Iconfont}" />
-
         <Setter Property="Command" Value="{Binding HeQiCommand}" />
         <Setter Property="Content" Value="&#xe627;" />
 

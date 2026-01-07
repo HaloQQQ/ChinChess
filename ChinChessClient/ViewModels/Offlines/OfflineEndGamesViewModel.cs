@@ -7,6 +7,7 @@ using Prism.Commands;
 using Prism.Events;
 using Prism.Regions;
 using System.Windows.Input;
+using Prism.Ioc;
 
 namespace ChinChessClient.ViewModels;
 
@@ -57,6 +58,13 @@ internal class OfflineEndGamesViewModel : NavigateViewModelBase
     public override void OnNavigatedFrom(NavigationContext navigationContext)
     {
         this.Dispose();
+    }
+
+    public override void OnNavigatedTo(NavigationContext navigationContext)
+    {
+        base.OnNavigatedTo(navigationContext);
+
+        ContainerLocator.Current.Resolve<IEventAggregator>().GetEvent<MainTitleChangedEvent>().Publish(this.Title);
     }
 
     public ICommand GoToPlayManualCommand { get; private set; }

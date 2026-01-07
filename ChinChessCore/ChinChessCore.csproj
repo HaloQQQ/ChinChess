@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Visitors\GuardVisitor.cs~RF4f1d596.TMP" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="IceTea.Atom" Version="1.2.17" />
   </ItemGroup>
 </Project>

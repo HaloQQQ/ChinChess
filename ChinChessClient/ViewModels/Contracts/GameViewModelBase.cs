@@ -164,6 +164,8 @@ internal abstract class GameViewModelBase<T> : NavigateViewModelBase, IDialogMes
             {
                 _result = value;
 
+                RaisePropertyChanged(nameof(Result));
+
                 if (_result == EnumGameResult.VictoryOrDefeat || _result == EnumGameResult.Deuce)
                 {
                     this.Status = EnumGameStatus.Stoped;

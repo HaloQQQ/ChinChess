@@ -25,7 +25,7 @@ namespace ChinChessCore.Models
         /// </summary>
         public int Index => Row * 9 + Column;
 
-        public bool IsValid => this.Row.IsInRange(0, 9) && this.Column.IsInRange(0, 8);
+        public bool IsValid => this.Row.IsInRange(0, MaxRowIndex) && this.Column.IsInRange(0, MaxColumnIndex);
 
         public static bool operator ==(Position left, Position right)
             => left.Row == right.Row && left.Column == right.Column;

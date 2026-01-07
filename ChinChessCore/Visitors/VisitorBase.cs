@@ -1,6 +1,5 @@
 ﻿using ChinChessCore.Models;
 using IceTea.Pure.BaseModels;
-using IceTea.Pure.Extensions;
 using IceTea.Pure.Utils;
 using System;
 using System.Collections.Generic;
@@ -29,22 +28,22 @@ namespace ChinChessCore.Visitors
 
         public InnerChinChess GetChessData(Position pos) => GetChess(pos).Data;
 
-        public abstract bool Visit(ChinChessJu chess, Position from, Position to);
-        public abstract bool Visit(ChinChessMa chess, Position from, Position to);
-        public abstract bool Visit(ChinChessPao chess, Position from, Position to);
-        public abstract bool Visit(ChinChessBing chess, Position from, Position to);
-        public abstract bool Visit(ChinChessXiang chess, Position from, Position to);
-        public abstract bool Visit(ChinChessShi chess, Position from, Position to);
-        public abstract bool Visit(ChinChessShuai chess, Position from, Position to);
+        public abstract bool Visit(ChinChessJu chess, Position to);
+        public abstract bool Visit(ChinChessMa chess, Position to);
+        public abstract bool Visit(ChinChessPao chess, Position to);
+        public abstract bool Visit(ChinChessBing chess, Position to);
+        public abstract bool Visit(ChinChessXiang chess, Position to);
+        public abstract bool Visit(ChinChessShi chess, Position to);
+        public abstract bool Visit(ChinChessShuai chess, Position to);
 
         public bool FaceToFace()
         {
             var shuais = this.GetChesses()
-                    .Where(c => c.Data.Type == ChessType.帥);
+                            .Where(c => c.Data.Type == ChessType.帥);
 
             if (shuais.Count() < 2)
             {
-                return true;
+                return false;
             }
 
             var redShuai = shuais.First(c => c.Data.IsRed == true);
@@ -75,19 +74,8 @@ namespace ChinChessCore.Visitors
             return false;
         }
 
-        protected virtual bool TryMoveCore(InnerChinChess chess, Position from, Position to)
-        {
-            int fromRow = from.Row, fromColumn = from.Column;
-            int toRow = to.Row, toColumn = to.Column;
-
-            if (!fromRow.IsInRange(0, 9) || !toRow.IsInRange(0, 9)
-                || !fromColumn.IsInRange(0, 8) || !toColumn.IsInRange(0, 8))
-            {
-                return false;
-            }
-
-            return true;
-        }
+        protected virtual bool TryMoveCore(InnerChinChess chess, Position to)
+            => !chess.IsEmpty && chess.CurPos.IsValid && to.IsValid && chess.CurPos != to;
 
         protected override void DisposeCore()
         {

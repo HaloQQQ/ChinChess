@@ -1,5 +1,4 @@
-﻿using ChinChessCore.Commands;
-using ChinChessCore.Visitors;
+﻿using ChinChessCore.Visitors;
 using IceTea.Pure.Utils;
 using System;
 
@@ -11,38 +10,31 @@ namespace ChinChessCore.Models
 
         public ChinChessXiang(bool isRed, bool isJieQi, bool isBack) : base(isRed, ChessType.相, isJieQi, isBack) { }
 
-        public override bool Accept(IVisitor visitor, Position from, Position to)
-            => visitor.Visit(this, from, to);
+        public override bool Accept(IVisitor visitor, Position to)
+            => visitor.Visit(this, to);
 
-        public override bool CanLeave(ICanPutToVisitor canPutToVisitor, Position from, bool _ = true)
+        public override bool CanLeave(ICanPutToVisitor canPutToVisitor, bool? leaveInHorizontal = null)
         {
+            Position from = this.CurPos;
             foreach (var item in new[] {
                                     new Position(from.Row - 2, from.Column - 2),
                                     new Position(from.Row - 2, from.Column + 2),
                                     new Position(from.Row + 2, from.Column - 2),
-                                    new Position(from.Row + 2, from.Column - 2)
+                                    new Position(from.Row + 2, from.Column + 2)
                                 })
             {
-                if (!this.CanPutTo(canPutToVisitor, from, item))
+                if (this.CanPutTo(canPutToVisitor, item))
                 {
-                    continue;
-                }
-
-                using (new MockMoveCommand(canPutToVisitor.GetChess(from), canPutToVisitor.GetChess(item))
-                            .Execute())
-                {
-                    if (!this.IsDangerous(canPutToVisitor, item, out ChinChessModel _))
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
 
             return false;
         }
 
-        public bool TryGetXiangBarrier(IVisitor visitor, Position from, Position to, out Position xiangBarrierPos)
+        public bool TryGetXiangBarrier(IVisitor visitor, Position to, out Position xiangBarrierPos)
         {
+            Position from = this.CurPos;
             AppUtils.AssertDataValidation(
                 Math.Abs(to.Row - from.Row) == 2 && Math.Abs(to.Column - from.Column) == 2,
                 "象的数据不对");
@@ -51,6 +43,22 @@ namespace ChinChessCore.Models
             xiangBarrierPos = new Position((from.Row + to.Row) / 2, (from.Column + to.Column) / 2);
 
             return !visitor.GetChessData(xiangBarrierPos).IsEmpty;
+        }
+
+        internal override bool IsAllowTo(Position toPos)
+        {
+            if (!base.IsAllowTo(toPos))
+            {
+                return false;
+            }
+
+            Position from = this.CurPos;
+            if (Math.Abs(toPos.Row - from.Row) != 2 || Math.Abs(toPos.Column - from.Column) != 2)
+            {
+                return false;
+            }
+
+            return this.IsPosValid(toPos);
         }
     }
 }

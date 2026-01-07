@@ -22,23 +22,23 @@ namespace ChinChessCore.Visitors
             _canPutToVisitor = canPutToVisitor.AssertNotNull(nameof(canPutToVisitor));
         }
 
-        public override bool Visit(ChinChessJu chess, Position from, Position _)
+        public override bool Visit(ChinChessJu chess, Position _)
         {
-            if (!this.TryMoveCore(chess, from, _))
+            if (!this.TryMoveCore(chess, _))
             {
                 return false;
             }
 
-            var up = MarkJu(chess, from, -1, 0);
-            var down = MarkJu(chess, from, 1, 0);
-            var left = MarkJu(chess, from, 0, -1);
-            var right = MarkJu(chess, from, 0, 1);
+            var up = MarkJu(chess, -1, 0);
+            var down = MarkJu(chess, 1, 0);
+            var left = MarkJu(chess, 0, -1);
+            var right = MarkJu(chess, 0, 1);
 
             return up || down || left || right;
 
-            bool MarkJu(ChinChessJu fromData, Position _from, int rowStep, int columnStep)
+            bool MarkJu(ChinChessJu fromData, int rowStep, int columnStep)
             {
-                int fromRow = _from.Row, fromColumn = _from.Column;
+                int fromRow = fromData.CurPos.Row, fromColumn = fromData.CurPos.Column;
 
                 bool hasChoice = false;
 
@@ -48,6 +48,14 @@ namespace ChinChessCore.Visitors
                 if (!fromData.IsPosValid(currentPos))
                 {
                     return false;
+                }
+
+                if (columnStep != 0)
+                {
+                    if (!fromData.CanPutTo(_canPutToVisitor, currentPos))
+                    {
+                        return false;
+                    }
                 }
 
                 ChinChessModel current = this.GetChess(currentPos);
@@ -66,7 +74,7 @@ namespace ChinChessCore.Visitors
                     current = this.GetChess(currentPos);
                 }
 
-                if (fromData.IsEnemy(current.Data))
+                if (fromData.IsEnemy(current.Data) == true)
                 {
                     current.IsReadyToPut = true;
 
@@ -77,26 +85,39 @@ namespace ChinChessCore.Visitors
             }
         }
 
-        public override bool Visit(ChinChessPao chess, Position from, Position _)
+        public override bool Visit(ChinChessPao chess, Position _)
         {
-            if (!this.TryMoveCore(chess, from, _))
+            if (!this.TryMoveCore(chess, _))
             {
                 return false;
             }
 
-            var up = MarkPao(chess, from, -1, 0);
-            var down = MarkPao(chess, from, 1, 0);
-            var left = MarkPao(chess, from, 0, -1);
-            var right = MarkPao(chess, from, 0, 1);
+            var up = MarkPao(chess, -1, 0);
+            var down = MarkPao(chess, 1, 0);
+            var left = MarkPao(chess, 0, -1);
+            var right = MarkPao(chess, 0, 1);
 
             return up || down || left || right;
 
-            bool MarkPao(ChinChessPao fromData, Position _from, int rowStep, int columnStep)
+            bool MarkPao(ChinChessPao fromData, int rowStep, int columnStep)
             {
                 bool hasChoice = false;
 
-                int currentRow = _from.Row + rowStep, currentColumn = _from.Column + columnStep;
+                int currentRow = fromData.CurPos.Row + rowStep, currentColumn = fromData.CurPos.Column + columnStep;
                 var currentPos = new Position(currentRow, currentColumn);
+
+                if (!fromData.IsPosValid(currentPos))
+                {
+                    return false;
+                }
+
+                if (columnStep != 0)
+                {
+                    if (this.GetChessData(currentPos).IsEmpty && !fromData.CanPutTo(_canPutToVisitor, currentPos))
+                    {
+                        return false;
+                    }
+                }
 
                 int mountainsCount = 0;
                 // 找空白 遇到 非空白 或者 边界 退出循环
@@ -120,7 +141,7 @@ namespace ChinChessCore.Visitors
                     {
                         if (++mountainsCount == 2)
                         {
-                            if (fromData.IsEnemy(current.Data))
+                            if (fromData.IsEnemy(current.Data) == true)
                             {
                                 current.IsReadyToPut = true;
                                 hasChoice = true;
@@ -135,38 +156,38 @@ namespace ChinChessCore.Visitors
             }
         }
 
-        public override bool Visit(ChinChessMa chess, Position from, Position _)
+        public override bool Visit(ChinChessMa chess, Position _)
         {
-            if (!this.TryMoveCore(chess, from, _))
+            if (!this.TryMoveCore(chess, _))
             {
                 return false;
             }
 
             // 左上 --
-            var upLeft = MarkMa(chess, from, -2, -1);
-            var leftUp = MarkMa(chess, from, -1, -2);
+            var upLeft = MarkMa(chess, -2, -1);
+            var leftUp = MarkMa(chess, -1, -2);
 
             // 左下 +-
-            var downLeft = MarkMa(chess, from, +2, -1);
-            var leftDown = MarkMa(chess, from, +1, -2);
+            var downLeft = MarkMa(chess, +2, -1);
+            var leftDown = MarkMa(chess, +1, -2);
 
             // 右上 -+
-            var upRight = MarkMa(chess, from, -2, +1);
-            var rightUp = MarkMa(chess, from, -1, +2);
+            var upRight = MarkMa(chess, -2, +1);
+            var rightUp = MarkMa(chess, -1, +2);
 
             // 右下 ++
-            var downRight = MarkMa(chess, from, +2, +1);
-            var rightDown = MarkMa(chess, from, +1, +2);
+            var downRight = MarkMa(chess, +2, +1);
+            var rightDown = MarkMa(chess, +1, +2);
 
             return upLeft || leftUp || downLeft || leftDown
                 || upRight || rightUp || downRight || rightDown;
 
-            bool MarkMa(ChinChessMa fromData, Position _from, int rowStep, int columnStep)
+            bool MarkMa(ChinChessMa fromData, int rowStep, int columnStep)
             {
-                int toRow = _from.Row + rowStep, toColumn = _from.Column + columnStep;
+                int toRow = fromData.CurPos.Row + rowStep, toColumn = fromData.CurPos.Column + columnStep;
                 Position toPos = new Position(toRow, toColumn);
 
-                if (fromData.Accept(_canPutToVisitor, from, toPos))
+                if (fromData.CanPutTo(_canPutToVisitor, toPos))
                 {
                     this.GetChess(toPos).IsReadyToPut = true;
 
@@ -177,26 +198,26 @@ namespace ChinChessCore.Visitors
             }
         }
 
-        public override bool Visit(ChinChessXiang chess, Position from, Position _)
+        public override bool Visit(ChinChessXiang chess, Position _)
         {
-            if (!this.TryMoveCore(chess, from, _))
+            if (!this.TryMoveCore(chess, _))
             {
                 return false;
             }
 
-            var leftUp = MarkXiang(chess, from, -2, -2);
-            var leftDown = MarkXiang(chess, from, 2, -2);
-            var rightUp = MarkXiang(chess, from, -2, 2);
-            var rightDown = MarkXiang(chess, from, 2, 2);
+            var leftUp = MarkXiang(chess, -2, -2);
+            var leftDown = MarkXiang(chess, 2, -2);
+            var rightUp = MarkXiang(chess, -2, 2);
+            var rightDown = MarkXiang(chess, 2, 2);
 
             return leftUp || leftDown || rightUp || rightDown;
 
-            bool MarkXiang(ChinChessXiang fromData, Position _from, int rowStep, int columnStep)
+            bool MarkXiang(ChinChessXiang fromData, int rowStep, int columnStep)
             {
-                int toRow = _from.Row + rowStep, toColumn = _from.Column + columnStep;
+                int toRow = fromData.CurPos.Row + rowStep, toColumn = fromData.CurPos.Column + columnStep;
                 Position toPos = new Position(toRow, toColumn);
 
-                if (fromData.Accept(_canPutToVisitor, _from, toPos))
+                if (fromData.CanPutTo(_canPutToVisitor, toPos))
                 {
                     this.GetChess(toPos).IsReadyToPut = true;
 
@@ -207,26 +228,26 @@ namespace ChinChessCore.Visitors
             }
         }
 
-        public override bool Visit(ChinChessBing chess, Position from, Position _)
+        public override bool Visit(ChinChessBing chess, Position _)
         {
-            if (!this.TryMoveCore(chess, from, _))
+            if (!this.TryMoveCore(chess, _))
             {
                 return false;
             }
 
-            var up = MarkBing(chess, from, -1, 0);
-            var down = MarkBing(chess, from, 1, 0);
-            var left = MarkBing(chess, from, 0, -1);
-            var right = MarkBing(chess, from, 0, 1);
+            var up = MarkBing(chess, -1, 0);
+            var down = MarkBing(chess, 1, 0);
+            var left = MarkBing(chess, 0, -1);
+            var right = MarkBing(chess, 0, 1);
 
             return up || down || left || right;
 
-            bool MarkBing(ChinChessBing fromData, Position _from, int rowStep, int columnStep)
+            bool MarkBing(ChinChessBing fromData, int rowStep, int columnStep)
             {
-                int toRow = _from.Row + rowStep, toColumn = _from.Column + columnStep;
+                int toRow = fromData.CurPos.Row + rowStep, toColumn = fromData.CurPos.Column + columnStep;
                 Position toPos = new Position(toRow, toColumn);
 
-                if (fromData.Accept(_canPutToVisitor, from, toPos))
+                if (fromData.CanPutTo(_canPutToVisitor, toPos))
                 {
                     this.GetChess(toPos).IsReadyToPut = true;
 
@@ -237,25 +258,25 @@ namespace ChinChessCore.Visitors
             }
         }
 
-        public override bool Visit(ChinChessShi chess, Position from, Position _)
+        public override bool Visit(ChinChessShi chess, Position _)
         {
-            if (!this.TryMoveCore(chess, from, _))
+            if (!this.TryMoveCore(chess, _))
             {
                 return false;
             }
 
-            var leftUp = MarkShi(chess, from, -1, -1);
-            var leftDown = MarkShi(chess, from, 1, -1);
-            var rightUp = MarkShi(chess, from, -1, 1);
-            var rightDown = MarkShi(chess, from, 1, 1);
+            var leftUp = MarkShi(chess, -1, -1);
+            var leftDown = MarkShi(chess, 1, -1);
+            var rightUp = MarkShi(chess, -1, 1);
+            var rightDown = MarkShi(chess, 1, 1);
 
             return leftUp || leftDown || rightUp || rightDown;
 
-            bool MarkShi(ChinChessShi fromData, Position _from, int rowStep, int columnStep)
+            bool MarkShi(ChinChessShi fromData, int rowStep, int columnStep)
             {
-                Position toPos = new Position(_from.Row + rowStep, _from.Column + columnStep);
+                Position toPos = new Position(fromData.CurPos.Row + rowStep, fromData.CurPos.Column + columnStep);
 
-                if (fromData.Accept(_canPutToVisitor, from, toPos))
+                if (fromData.CanPutTo(_canPutToVisitor, toPos))
                 {
                     this.GetChess(toPos).IsReadyToPut = true;
 
@@ -266,25 +287,25 @@ namespace ChinChessCore.Visitors
             }
         }
 
-        public override bool Visit(ChinChessShuai chess, Position from, Position _)
+        public override bool Visit(ChinChessShuai chess, Position _)
         {
-            if (!this.TryMoveCore(chess, from, _))
+            if (!this.TryMoveCore(chess, _))
             {
                 return false;
             }
 
-            var up = MarkShuai(chess, from, -1, 0);
-            var down = MarkShuai(chess, from, 1, 0);
-            var left = MarkShuai(chess, from, 0, -1);
-            var right = MarkShuai(chess, from, 0, 1);
+            var up = MarkShuai(chess, -1, 0);
+            var down = MarkShuai(chess, 1, 0);
+            var left = MarkShuai(chess, 0, -1);
+            var right = MarkShuai(chess, 0, 1);
 
             return up || down || left || right;
 
-            bool MarkShuai(ChinChessShuai fromData, Position _from, int rowStep, int columnStep)
+            bool MarkShuai(ChinChessShuai fromData, int rowStep, int columnStep)
             {
-                Position toPos = new Position(_from.Row + rowStep, _from.Column + columnStep);
+                Position toPos = new Position(fromData.CurPos.Row + rowStep, fromData.CurPos.Column + columnStep);
 
-                if (fromData.Accept(_canPutToVisitor, from, toPos))
+                if (fromData.CanPutTo(_canPutToVisitor, toPos))
                 {
                     this.GetChess(toPos).IsReadyToPut = true;
 
@@ -295,14 +316,9 @@ namespace ChinChessCore.Visitors
             }
         }
 
-        protected override bool TryMoveCore(InnerChinChess chess, Position from, Position _)
+        protected override bool TryMoveCore(InnerChinChess chess, Position _)
         {
-            if (!base.TryMoveCore(chess, from, _))
-            {
-                return false;
-            }
-
-            if (!chess.IsPosValid(from))
+            if (chess.IsEmpty)
             {
                 return false;
             }

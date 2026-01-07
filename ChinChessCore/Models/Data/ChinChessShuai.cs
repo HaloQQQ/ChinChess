@@ -1,5 +1,6 @@
 ﻿using ChinChessCore.Commands;
 using ChinChessCore.Visitors;
+using System;
 
 namespace ChinChessCore.Models
 {
@@ -9,30 +10,50 @@ namespace ChinChessCore.Models
 
         public ChinChessShuai(bool isRed, bool isJieQi) : base(isRed, ChessType.帥, isJieQi, false) { }
 
-        public override bool Accept(IVisitor visitor, Position from, Position to)
-            => visitor.Visit(this, from, to);
+        public override bool Accept(IVisitor visitor, Position to)
+            => visitor.Visit(this, to);
 
-        public override bool CanLeave(ICanPutToVisitor canPutToVisitor, Position from, bool isHorizontal = true)
+        public override bool CanLeave(ICanPutToVisitor canPutToVisitor, bool? leaveInHorizontal = null)
         {
-            var rowStep = isHorizontal ? 1 : 0;
-            var columnStep = isHorizontal == false ? 1 : 0;
-
-            foreach (var item in new[] {
-                                    new Position(from.Row + rowStep, from.Column + columnStep),
-                                    new Position(from.Row - rowStep, from.Column - columnStep)
-                                })
+            Position pos = this.CurPos;
+            foreach (var item in new Position[] {
+                                new Position(pos.Row - 1, pos.Column),
+                                new Position(pos.Row + 1, pos.Column),
+                                new Position(pos.Row, pos.Column - 1),
+                                new Position(pos.Row, pos.Column + 1)
+                            })
             {
-                if (!this.CanPutTo(canPutToVisitor, from, item))
+                if (leaveInHorizontal != null)
                 {
-                    continue;
+                    if (leaveInHorizontal == true)
+                    {
+                        if (this.CurPos.Column == item.Column)
+                        {
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        if (this.CurPos.Row == item.Row)
+                        {
+                            continue;
+                        }
+                    }
                 }
 
-                using (new MockMoveCommand(canPutToVisitor.GetChess(from), canPutToVisitor.GetChess(item))
-                            .Execute())
+                if (this.CanPutTo(canPutToVisitor, item))
                 {
-                    if (!this.IsDangerous(canPutToVisitor, item, out _))
+                    var toChess = canPutToVisitor.GetChess(item);
+                    using (new MockMoveCommand(
+                                canPutToVisitor.GetChess(pos),
+                                toChess
+                            ).Execute()
+                        )
                     {
-                        return true;
+                        if (!toChess.Data.IsDangerous(canPutToVisitor, out _))
+                        {
+                            return true;
+                        }
                     }
                 }
             }
@@ -40,36 +61,20 @@ namespace ChinChessCore.Models
             return false;
         }
 
-        public bool SelfRescue(ICanPutToVisitor canPutToVisitor, Position selfPos)
+        internal override bool IsAllowTo(Position toPos)
         {
-            foreach (var item in new Position[] {
-                                new Position(selfPos.Row - 1, selfPos.Column),
-                                new Position(selfPos.Row + 1, selfPos.Column),
-                                new Position(selfPos.Row, selfPos.Column - 1),
-                                new Position(selfPos.Row, selfPos.Column + 1)
-                            })
+            if (!base.IsAllowTo(toPos))
             {
-                if (this.CanPutTo(canPutToVisitor, selfPos, item))
-                {
-                    using (new MockMoveCommand(
-                                canPutToVisitor.GetChess(selfPos),
-                                canPutToVisitor.GetChess(item)
-                            ).Execute()
-                        )
-                    {
-                        if (!canPutToVisitor.GetChessData(item)
-                                .IsDangerous(canPutToVisitor, item, out _))
-                        {
-                            if (!canPutToVisitor.FaceToFace())
-                            {
-                                return true;
-                            }
-                        }
-                    }
-                }
+                return false;
             }
 
-            return false;
+            Position from = this.CurPos;
+            if (Math.Abs(toPos.Row - from.Row) + Math.Abs(toPos.Column - from.Column) != 1)
+            {
+                return false;
+            }
+
+            return this.IsPosValid(toPos);
         }
     }
 }

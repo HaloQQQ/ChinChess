@@ -14,13 +14,13 @@ namespace ChinChessCore.Visitors
 
         IEnumerable<ChinChessModel> GetChesses();
 
-        bool Visit(ChinChessJu chess, Position from, Position to);
-        bool Visit(ChinChessMa chess, Position from, Position to);
-        bool Visit(ChinChessPao chess, Position from, Position to);
-        bool Visit(ChinChessBing chess, Position from, Position to);
+        bool Visit(ChinChessJu chess, Position to);
+        bool Visit(ChinChessMa chess, Position to);
+        bool Visit(ChinChessPao chess, Position to);
+        bool Visit(ChinChessBing chess, Position to);
 
-        bool Visit(ChinChessXiang chess, Position from, Position to);
-        bool Visit(ChinChessShi chess, Position from, Position to);
-        bool Visit(ChinChessShuai chess, Position from, Position to);
+        bool Visit(ChinChessXiang chess, Position to);
+        bool Visit(ChinChessShi chess, Position to);
+        bool Visit(ChinChessShuai chess, Position to);
     }
 }

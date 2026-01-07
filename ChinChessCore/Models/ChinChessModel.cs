@@ -1,7 +1,6 @@
 ﻿using ChinChessCore.Visitors;
 using ChinChessCore.Contracts;
 using IceTea.Pure.BaseModels;
-using IceTea.Pure.Extensions;
 using IceTea.Pure.Utils;
 using System.Diagnostics;
 using System;
@@ -12,7 +11,7 @@ using System;
 namespace ChinChessCore.Models
 {
     [DebuggerDisplay("IsRed={Data.IsRed}, Type={Data.Type}")]
-    public class ChinChessModel : NotifyBase, IChineseChess
+    public class ChinChessModel : NotifyBase
     {
         public int Row => this.Pos.Row;
         public int Column => this.Pos.Column;
@@ -81,7 +80,7 @@ namespace ChinChessCore.Models
 
             AppUtils.AssertDataValidation(temp.IsPosValid(pos), $"{chessType}{isRed}被放置的位置不合法");
 
-            this._data = temp;
+            this.Data = temp;
 
             return true;
         }
@@ -92,7 +91,16 @@ namespace ChinChessCore.Models
         public InnerChinChess Data
         {
             get => _data;
-            set => SetProperty(ref _data, value.AssertArgumentNotNull(nameof(Data)));
+            set
+            {
+                if (SetProperty(ref _data, value.AssertArgumentNotNull(nameof(Data))))
+                {
+                    if (!_data.IsEmpty)
+                    {
+                        _data.CurPos = Pos;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -117,7 +125,15 @@ namespace ChinChessCore.Models
         /// 试走棋
         /// </summary>
         /// <param name="newData"></param>
-        public void SetDataWithoutNotify(InnerChinChess newData) => this._data = newData.AssertArgumentNotNull(nameof(newData));
+        public void SetDataWithoutNotify(InnerChinChess newData)
+        {
+            this._data = newData.AssertArgumentNotNull(nameof(newData));
+
+            if (!_data.IsEmpty)
+            {
+                _data.CurPos = Pos;
+            }
+        }
 
         private bool _isDangerous;
         public bool IsDangerous
@@ -133,10 +149,8 @@ namespace ChinChessCore.Models
             set => SetProperty(ref _isReadyToPut, value);
         }
 
-        #region IChineseChess
         public bool TrySelect(IPreMoveVisitor preMoveVisitor)
-            => this.Data.PreMove(preMoveVisitor, this.Pos);
-        #endregion
+            => this.Data.PreMove(preMoveVisitor);
 
         protected override void DisposeCore()
         {
@@ -150,8 +164,7 @@ namespace ChinChessCore.Models
 
         private void InitData(int row, int column, bool isJieQi)
         {
-            AppUtils.Assert(row.IsInRange(0, 9), "超出行范围");
-            AppUtils.Assert(column.IsInRange(0, 8), "超出列范围");
+            AppUtils.Assert(new Position(row, column).IsValid, "超出范围");
 
             bool isRed = row > 4;
 
@@ -159,27 +172,27 @@ namespace ChinChessCore.Models
             {
                 if (column == 0 || column == 8)
                 {
-                    _data = new ChinChessJu(isRed, isJieQi, isJieQi);
+                    Data = new ChinChessJu(isRed, isJieQi, isJieQi);
                     return;
                 }
                 else if (column == 1 || column == 7)
                 {
-                    _data = new ChinChessMa(isRed, isJieQi, isJieQi);
+                    Data = new ChinChessMa(isRed, isJieQi, isJieQi);
                     return;
                 }
                 else if (column == 2 || column == 6)
                 {
-                    _data = new ChinChessXiang(isRed, isJieQi, isJieQi);
+                    Data = new ChinChessXiang(isRed, isJieQi, isJieQi);
                     return;
                 }
                 else if (column == 3 || column == 5)
                 {
-                    _data = new ChinChessShi(isRed, isJieQi, isJieQi);
+                    Data = new ChinChessShi(isRed, isJieQi, isJieQi);
                     return;
                 }
                 else if (column == 4)
                 {
-                    _data = new ChinChessShuai(isRed, isJieQi);
+                    Data = new ChinChessShuai(isRed, isJieQi);
                     return;
                 }
             }
@@ -187,7 +200,7 @@ namespace ChinChessCore.Models
             {
                 if (column == 0 || column == 2 || column == 4 || column == 6 || column == 8)
                 {
-                    _data = new ChinChessBing(isRed, isJieQi, isJieQi);
+                    Data = new ChinChessBing(isRed, isJieQi, isJieQi);
                     return;
                 }
             }
@@ -195,7 +208,7 @@ namespace ChinChessCore.Models
             {
                 if (column == 1 || column == 7)
                 {
-                    _data = new ChinChessPao(isRed, isJieQi, isJieQi);
+                    Data = new ChinChessPao(isRed, isJieQi, isJieQi);
                     return;
                 }
             }

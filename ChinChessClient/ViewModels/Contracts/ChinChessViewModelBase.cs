@@ -10,7 +10,6 @@ using IceTea.Wpf.Atom.Utils.HotKey.App;
 using Prism.Commands;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Security.Cryptography;
 using System.Windows.Input;
 
 #pragma warning disable CS8625 // 无法将 null 字面量转换为非 null 的引用类型。
@@ -25,6 +24,10 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
 
     public ObservableCollection<InnerChinChess> BlackDeads { get; private set; } = new();
     public ObservableCollection<InnerChinChess> RedDeads { get; private set; } = new();
+
+    public string DatasStr => ChinChessSerializer.Serialize(this.Datas.Where(d => !d.Data.IsEmpty)
+                                                                .Select(m => new ChinChessInfo(m.Pos, isRed: (bool)m.Data.IsRed, chessType: (ChessType)m.Data.Type))
+                                                                .ToArray());
 
     protected ICanPutToVisitor _canPutVisitor;
     protected IPreMoveVisitor _preMoveVisitor;
@@ -51,9 +54,7 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
             }
         }
 
-        var datas = ChinChessSerializer.Serialize(list.Where(c => !c.Data.IsEmpty).Select(c => new ChinChessInfo(c.Pos, c.Data.IsRed == true, (ChessType)c.Data.Type)).ToArray());
-
-        var model = new EndGameModel(DateTime.Now.FormatTime(), datas);
+        var model = new EndGameModel(DateTime.Now.FormatTime(), this.DatasStr);
 
         model.Steps = string.Join(',', this.CommandStack.Select(cmd => cmd.Notation));
 
@@ -163,7 +164,7 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
                 if (shuai != null)
                 {
                     if (_canPutVisitor.FaceToFace()
-                        || shuai.Data.IsDangerous(_canPutVisitor, shuai.Pos, out _))
+                        || shuai.Data.IsDangerous(_canPutVisitor, out _))
                     {
                         this.PublishMsg("走子后送将啊，带佬");
 
@@ -232,7 +233,7 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
 
             var isGameOver = false;
 
-            var isDangerous = item.Data.IsDangerous(_canPutVisitor, item.Pos, out ChinChessModel killer);
+            var isDangerous = item.Data.IsDangerous(_canPutVisitor, out ChinChessModel killer);
 
             if (isDangerous)
             {
@@ -240,7 +241,7 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
                 {
                     using (new MockMoveCommand(killer, item).Execute())
                     {
-                        if (item.Data.IsDangerous(_canPutVisitor, item.Pos, out _))
+                        if (item.Data.IsDangerous(_canPutVisitor, out _))
                         {
                             isDangerous = false;
                         }
@@ -248,25 +249,11 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
                 }
                 else
                 {
-                    if (!killer.Data.CanBeProtected(
-                            _guardVisitor,
-                            killer.Pos,
-                            item.Pos)
-                       )
+                    if (!killer.Data.CanBeSaveFromMe(_guardVisitor, item.Pos))
                     {
-                        if (item.Data is ChinChessShuai shuai)
-                        {
-                            if (!shuai.SelfRescue(_canPutVisitor, item.Pos))
-                            {
-                                isRedWin = shuai.IsRed == false;
+                        isRedWin = item.Data.IsRed == false;
 
-                                isGameOver = true;
-                            }
-                            else
-                            {
-                                this.JiangJun_Mp3();
-                            }
-                        }
+                        isGameOver = true;
                     }
                     else
                     {
@@ -280,9 +267,9 @@ internal abstract class ChinChessViewModelBase : GameViewModelBase<ChinChessMode
                 {
                     int count = this.Datas.Count(c => c.Data.IsRed == item.Data.IsRed);
 
-                    if (count == 1 && item.Data is ChinChessShuai shuai && !shuai.SelfRescue(_canPutVisitor, item.Pos))
+                    if (count == 1 && !item.Data.CanLeave(_canPutVisitor))
                     {
-                        isRedWin = shuai.IsRed == false;
+                        isRedWin = item.Data.IsRed == false;
 
                         isGameOver = true;
                     }

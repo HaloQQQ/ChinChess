@@ -1,6 +1,5 @@
-﻿using ChinChessCore.Models;
-using IceTea.Pure.Utils;
-using System;
+﻿using ChinChessCore.Commands;
+using ChinChessCore.Models;
 using System.Collections.Generic;
 
 #pragma warning disable CS8625 // 无法将 null 字面量转换为非 null 的引用类型。
@@ -16,14 +15,14 @@ namespace ChinChessCore.Visitors
     {
         public CanPutToVisitor(IList<ChinChessModel> datas) : base(datas) { }
 
-        public override bool Visit(ChinChessJu chess, Position from, Position to)
+        public override bool Visit(ChinChessJu chess, Position to)
         {
-            if (!this.TryMoveCore(chess, from, to))
+            if (!this.TryMoveCore(chess, to))
             {
                 return false;
             }
 
-            int fromRow = from.Row, fromColumn = from.Column;
+            int fromRow = chess.CurPos.Row, fromColumn = chess.CurPos.Column;
             int toRow = to.Row, toColumn = to.Column;
 
             var isSameRow = fromRow == toRow;
@@ -55,13 +54,14 @@ namespace ChinChessCore.Visitors
             return true;
         }
 
-        public override bool Visit(ChinChessPao chess, Position from, Position to)
+        public override bool Visit(ChinChessPao chess, Position to)
         {
-            if (!this.TryMoveCore(chess, from, to))
+            if (!this.TryMoveCore(chess, to))
             {
                 return false;
             }
 
+            Position from = chess.CurPos;
             int fromRow = from.Row, fromColumn = from.Column;
             int toRow = to.Row, toColumn = to.Column;
 
@@ -106,127 +106,78 @@ namespace ChinChessCore.Visitors
             return true;
         }
 
-        public override bool Visit(ChinChessBing chess, Position from, Position to)
+        public override bool Visit(ChinChessBing chess, Position to)
         {
-            if (!this.TryMoveCore(chess, from, to))
+            if (!this.TryMoveCore(chess, to))
             {
                 return false;
             }
 
-            int fromRow = from.Row, fromColumn = from.Column;
-            int toRow = to.Row, toColumn = to.Column;
-
-            if (Math.Abs(fromRow - toRow) + Math.Abs(fromColumn - toColumn) != 1)
-            {
-                return false;
-            }
-
-            if (!chess.IsPosValid(from) || !chess.IsPosValid(to))
-            {
-                return false;
-            }
-
-            if (chess.IsRed == true)
-            {
-                if (fromRow - 1 == toRow) // 前进
-                {
-                    return true;
-                }
-
-                if (fromRow < 5) // 过河后左右
-                {
-                    if (fromRow == toRow)
-                    {
-                        return true;
-                    }
-                }
-            }
-            else
-            {
-                if (fromRow + 1 == toRow) // 前进
-                {
-                    return true;
-                }
-
-                if (fromRow > 4) // 过河后左右
-                {
-                    if (fromRow == toRow)
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
+            return chess.IsAllowTo(to);
         }
 
-        public override bool Visit(ChinChessMa chess, Position from, Position to)
+        public override bool Visit(ChinChessMa chess, Position to)
         {
-            if (!this.TryMoveCore(chess, from, to))
+            if (!this.TryMoveCore(chess, to))
             {
                 return false;
             }
 
-            var isHorizontal = Math.Abs(from.Row - to.Row) == 1 && Math.Abs(from.Column - to.Column) == 2;
-            var isVertical = Math.Abs(from.Row - to.Row) == 2 && Math.Abs(from.Column - to.Column) == 1;
-
-            if (!isHorizontal && !isVertical)
+            if (!chess.IsAllowTo(to))
             {
                 return false;
             }
 
-
-            return !chess.TryGetMaBarrier(this, from, to, out _);
+            return !chess.TryGetMaBarrier(this, to, out _);
         }
 
-        public override bool Visit(ChinChessXiang chess, Position from, Position to)
+        public override bool Visit(ChinChessXiang chess, Position to)
         {
-            if (!this.TryMoveCore(chess, from, to))
+            if (!this.TryMoveCore(chess, to))
             {
                 return false;
             }
 
-            if (Math.Abs(to.Row - from.Row) != 2 || Math.Abs(to.Column - from.Column) != 2)
+            if (!chess.IsAllowTo(to))
             {
                 return false;
             }
 
-            if (!chess.IsPosValid(from) || !chess.IsPosValid(to))
-            {
-                return false;
-            }
-
-            return !chess.TryGetXiangBarrier(this, from, to, out _);
+            return !chess.TryGetXiangBarrier(this, to, out _);
         }
 
-        public override bool Visit(ChinChessShi chess, Position from, Position to)
+        public override bool Visit(ChinChessShi chess, Position to)
         {
-            if (!this.TryMoveCore(chess, from, to))
+            if (!this.TryMoveCore(chess, to))
             {
                 return false;
             }
 
-            if (!chess.IsPosValid(from) || !chess.IsPosValid(to))
-            {
-                return false;
-            }
-
-            return Math.Abs(to.Row - from.Row) == 1 && Math.Abs(to.Column - from.Column) == 1;
+            return chess.IsAllowTo(to);
         }
 
-        public override bool Visit(ChinChessShuai chess, Position from, Position to)
+        public override bool Visit(ChinChessShuai chess, Position to)
         {
-            if (!this.TryMoveCore(chess, from, to))
+            if (!this.TryMoveCore(chess, to))
             {
                 return false;
             }
 
-            if (!chess.IsPosValid(from) || !chess.IsPosValid(to))
+            if (!chess.IsAllowTo(to))
             {
                 return false;
             }
 
-            return Math.Abs(to.Row - from.Row) + Math.Abs(to.Column - from.Column) == 1;
+            ChinChessModel targetChess = this.GetChess(to);
+            using (new MockMoveCommand(this.GetChess(chess.CurPos), targetChess).Execute())
+            {
+                if (targetChess.Data.IsDangerous(this, out _))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -237,28 +188,30 @@ namespace ChinChessCore.Visitors
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <returns></returns>
-        protected override bool TryMoveCore(InnerChinChess chess, Position from, Position to)
+        protected override bool TryMoveCore(InnerChinChess chess, Position to)
         {
-            if (!base.TryMoveCore(chess, from, to))
+            if (!base.TryMoveCore(chess, to))
             {
                 return false;
             }
 
-            if (from == to)
+            if (chess.IsEnemy(this.GetChessData(to)) == false)
             {
                 return false;
             }
 
-            var fromData = this.GetChessData(from);
+            if (chess.CurPos.Column != to.Column)
+            {
+                using (new MockMoveCommand(this.GetChess(chess.CurPos), this.GetChess(to)).Execute())
+                {
+                    if (this.FaceToFace())
+                    {
+                        return false;
+                    }
+                }
+            }
 
-            AppUtils.AssertDataValidation(fromData == chess, $"{chess.Type}不在{from.ToString()}");
-
-            var targetData = this.GetChessData(to);
-
-            bool prevent = fromData.IsEmpty
-                            || (!targetData.IsEmpty && fromData.IsRed == targetData.IsRed);
-
-            return !prevent;
+            return true;
         }
     }
 }

@@ -12,13 +12,13 @@ using Prism.Regions;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows.Input;
-using System.Xml.Linq;
 
 namespace ChinChessClient.ViewModels;
 
 #pragma warning disable CS8600 // 将 null 字面量或可能为 null 的值转换为非 null 类型。
 #pragma warning disable CS8601 // 引用类型赋值可能为 null。
 #pragma warning disable CS8602 // 解引用可能出现空引用。
+#pragma warning disable CS8604 // 引用类型参数可能为 null。
 #pragma warning disable CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑添加 "required" 修饰符或声明为可为 null。
 #pragma warning disable CS8625 // 无法将 null 字面量转换为非 null 的引用类型。
 #pragma warning disable CS8629 // 可为 null 的值类型可为 null。
@@ -48,13 +48,7 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
 
                                     if (_endGameModel.IsNullOr())
                                     {
-                                        var chessesInfo = this.Datas.Where(d => !d.Data.IsEmpty)
-                                                                .Select(m => new ChinChessInfo(m.Pos, isRed: (bool)m.Data.IsRed, chessType: (ChessType)m.Data.Type))
-                                                                .ToArray();
-
-                                        var infoStr = ChinChessSerializer.Serialize(chessesInfo);
-
-                                        _endGameModel = new EndGameModel(DateTime.Now.FormatTime(), infoStr);
+                                        _endGameModel = new EndGameModel(DateTime.Now.FormatTime(), this.DatasStr);
                                     }
 
                                     IsDesignOver = true;
@@ -79,7 +73,10 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
 
             IsDesignOver = true;
 
-            _endGameModel.Name = name;
+            if (_endGameModel.IsNullOr())
+            {
+                _endGameModel = new EndGameModel(name, this.DatasStr);
+            }
 
             configManager.WriteConfigNode<EndGameModel>(_endGameModel, ["EndGames", name]);
 
@@ -108,9 +105,8 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
             {
                 this.Result = EnumGameResult.Deuce;
             }
-        }, () => Result == EnumGameResult.During && !this.CommandStack.IsNullOrEmpty())
-            .ObservesProperty(() => this.CommandStack.Count)
-            .ObservesProperty(() => Result);
+        }, () => !this.CommandStack.IsNullOrEmpty())
+            .ObservesProperty(() => this.CommandStack.Count);
 
         bool CanUse()
         {
@@ -122,7 +118,7 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
 
             var enemyShuai = this.Datas.First(d => d.Data.Type == ChessType.帥 && d.Data.IsRed != this.IsRedTurn);
 
-            if (enemyShuai.Data.IsDangerous(this._canPutVisitor, enemyShuai.Pos, out _)
+            if (enemyShuai.Data.IsDangerous(this._canPutVisitor, out _)
                 || _canPutVisitor.FaceToFace()
                 || this.IsGameOver())
             {
@@ -289,10 +285,7 @@ internal class OfflineCustomViewModel : OfflineChinChessViewModelBase
             var existingCount = existingCounts[key];
             var remainingCount = Math.Max(0, defaultCount - existingCount);
 
-            if (remainingCount > 0)
-            {
-                result.Add(new CustomChess(key.Item1, key.Item2, remainingCount));
-            }
+            result.Add(new CustomChess(key.Item1, key.Item2, remainingCount));
         }
 
         return result;
